@@ -3,12 +3,12 @@
 O sistema público de transporte de São Paulo é utilizado por milhões de pessoas diariamente, e a eficiência no gerenciamento da frota de ônibus é essencial para garantir a qualidade do serviço. Para otimizar a operação do transporte público, é necessário implementar uma solução que permita o monitoramento em near real-time dos ônibus em circulação, além de fornecer métricas e KPIs relevantes para a tomada de decisão.
 
  
-# Objetivo:
+# Objetivo
 
  Criar um produto de dados em near real time ou batch que possibilite métricas, KPIs, monitoramento e acompanhamento dos ônibus em circulação no sistema público de transporte da cidade de São Paulo.
 
 
-# Entregáveis:
+# Entregáveis
 
 Desenho arquitetural da solução indicando as ferramentas utilizadas e fluxos propostos.
 Explicação do por que de cada escolha realizada na arquitetura proposta.
@@ -19,7 +19,7 @@ Apresentação dos entregáveis.
 
  
 
-# Especificação:
+# Especificação
 
  
 
@@ -52,8 +52,9 @@ Realizar discovery nas bases de dados para entender os possíveis cruzamentos de
 
 Data máxima de entrega: **12/11/2025 ás 23:59.**
 
-#### IMPORTANTE:
+#### IMPORTANTE
 
 Não serão aceitas entregas por e-mail, mensagens ou qualquer outro meio de comunicação externo ao Portal Acadêmico.
 Não serão consideradas anotações nos comentários da tarefa como forma válida de entrega. O arquivo precisa ser corretamente anexado à tarefa no portal.
+
 O prazo de entrega é impreterivelmente até às 23:59 do dia 12/11. Submissões realizadas após esse horário serão desconsideradas, independentemente do motivo alegado.
