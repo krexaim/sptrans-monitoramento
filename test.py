@@ -1,12 +1,12 @@
+from dotenv import load_dotenv
+import os
 import requests
-
-TOKEN = "4283e9d5e0f2a14d44e8146a67a5a2531160bf27fd653edc38bfb3fb949fa7bd"
 
 BASE_URL = " http://api.olhovivo.sptrans.com.br/v2.1"
 
 session = requests.Session()
 
-auth_url = f"{BASE_URL}/Login/Autenticar?token={TOKEN}"
+auth_url = f"{BASE_URL}/Login/Autenticar?token={API_KEY}"
 auth_response = session.post(auth_url)
 
 if auth_response.status_code == 200 and auth_response.text.lower() == 'true':
