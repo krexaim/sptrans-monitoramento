@@ -1,0 +1,10 @@
+services:
+  postgres:
+  #todo
+
+
+  minio:
+  #todo
+
+  airflow:
+  #todo
