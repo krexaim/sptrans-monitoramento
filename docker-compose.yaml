@@ -9,7 +9,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      #todo
+      - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "airflow"]
       interval: 10s
@@ -21,7 +21,11 @@ services:
     image:  quay.io/minio/minio:RELEASE.2025-02-28T09-55-16Z
     container_name: minio
     entrypoint: sh
-    command: '-c ''mkdir -p /minio_data/bronze && mkdir -p /minio_data/silver && mkdir -p /minio_data/gold && minio server /minio_data --console-address ":9001"'''
+    command: >
+      -c 'mkdir -p /minio_data/bronze &&
+          mkdir -p /minio_data/silver &&
+          mkdir -p /minio_data/gold &&
+          minio server /minio_data --console-address ":9001"'
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -29,10 +33,7 @@ services:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: minioadmin
     volumes: 
-      #todo
+      - ./data/minio:/minio_data
 
   airflow:
-  #todo
-
-volumes:
   #todo
