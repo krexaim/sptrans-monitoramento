@@ -34,6 +34,13 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin
     volumes: 
       - ./data/minio:/minio_data
-
-  airflow:
+  mc:
+    image: minio/mc:RELEASE.2025-04-08T15-39-49Z
+    container_name: mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c ""
+      
+  # airflow:
   #todo
