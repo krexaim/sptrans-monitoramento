@@ -2,7 +2,7 @@ import os
 import requests
 import json
 import io
-from datetime import datetime
+from datetime import datetime, timezone
 from minio import Minio
 from dotenv import load_dotenv
 
@@ -46,7 +46,7 @@ def upload_to_minio(data):
         secure=False
     )
 
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     file_name = f"bus_positions_{timestamp}.json"
 
     data_bytes = io.BytesIO(json.dumps(data).encode("utf-8"))
