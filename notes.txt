@@ -1,5 +1,7 @@
-Choose ingestion tool
+Choose ingestion tool - Airflow scheduled python script
 
-Choose storage tool
+Choose storage tool - Minio + Postgres
 
-Include OLAP tool for analysis
+Include OLAP tool for adhoc analysis - trino/presto or postgresql with materialized views
+
+Data viz - Metabase
