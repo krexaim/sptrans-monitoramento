@@ -61,8 +61,11 @@ services:
      - ./dags:/opt/airflow/dags
      - ./airflow/plugins:/opt/airflow/plugins
      - ./airflow/config/airflow.cfg:/opt/airflow/airflow.cfg
+     - ./requirements.txt:/requirements.txt
+     - ./.env:/opt/airflow/.env
    command: >
      bash -c "
+     pip install --no-cache-dir -r /requirements.txt &&
      airflow db init &&
      airflow users create --username admin --firstname admin --lastname admin --role Admin --email admin@example.com --password admin &&
      airflow standalone
