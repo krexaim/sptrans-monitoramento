@@ -5,3 +5,8 @@ Choose storage tool - Minio + Postgres
 Include OLAP tool for adhoc analysis - trino/presto or postgresql with materialized views
 
 Data viz - Metabase
+
+KPIs:
+ - # Onibus
+ - % Onibus eletrico
+ - # Delays
