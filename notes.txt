@@ -8,5 +8,8 @@ Data viz - Metabase
 
 KPIs:
  - # Onibus
- - % Onibus eletrico
- - # Delays
+    - % Onibus eletrico - emissao CO2
+ - # Delays, total atrasado em minutos
+    - Previsao de chegada
+    - Atraso por linha
+ - 
