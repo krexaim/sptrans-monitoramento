@@ -9,11 +9,7 @@ from dotenv import load_dotenv
 #------------------------
 # Configuração
 #------------------------
-
-if os.path.exists("/opt/airflow/.env"):    # Carregando a .env dentro do airflow ou local
-    load_dotenv("/opt/airflow/.env")
-else:
-    load_dotenv()
+load_dotenv()
 
 SPTRANS_BASE_URL = "https://api.olhovivo.sptrans.com.br/v2.1"
 SPTRANS_API_KEY = os.getenv("SPTRANS_API_KEY")
