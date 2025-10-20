@@ -6,12 +6,13 @@ from .config import MINIO_ROOT_USER, MINIO_ROOT_PASSWORD, MINIO_ENDPOINT
 
 MINIO_BUCKET = "bronze"
 
-def upload_to_minio(data):
+# Faz um upload pro minio com identificadores do dataset e timestamp
+def upload_to_minio(data, dataset_name):  
     client = Minio(
         MINIO_ENDPOINT,
         access_key=MINIO_ROOT_USER,
         secret_key=MINIO_ROOT_PASSWORD,
-        secure=False  # Set to True if using HTTPS
+        secure=False  
     )
 
     now = datetime.now(timezone.utc)
@@ -20,7 +21,7 @@ def upload_to_minio(data):
     day = now.strftime("%d")
     timestamp = now.strftime("%Y%m%d_%H%M%S")
 
-    object_name = f"posicao/{year}/{month}/{day}/bus_positions_{timestamp}.json"
+    object_name = f"{dataset_name}/{year}/{month}/{day}/{dataset_name}_{timestamp}.json"
     data_bytes = io.BytesIO(json.dumps(data).encode("utf-8"))
 
     client.put_object(
