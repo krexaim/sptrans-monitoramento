@@ -3,7 +3,6 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime, timezone, timedelta
 import scripts.test
 
-# Define the DAG
 with DAG(
     dag_id="sptrans_bus_positions",
     start_date=datetime(2025, 10, 10),
