@@ -6,22 +6,22 @@ from datetime import datetime, timezone
 from minio import Minio
 from dotenv import load_dotenv
 
-# Load environment variables
+# Configuração
 load_dotenv()
 
 SPTRANS_BASE_URL = "https://api.olhovivo.sptrans.com.br/v2.1"
 SPTRANS_API_KEY = os.getenv("SPTRANS_API_KEY")
 
-MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT")
+MINIO_ENDPOINT = "localhost:9000"
 MINIO_ACCESS_KEY = os.getenv("MINIO_ROOT_USER")
 MINIO_SECRET_KEY = os.getenv("MINIO_ROOT_PASSWORD")
 MINIO_BUCKET = "bronze"
 
 session = requests.Session()
 
-auth_url = f"{SPTRANS_BASE_URL}/Login/Autenticar?token={SPTRANS_API_KEY}"
-auth_response = session.post(auth_url)
-
+#------------------
+#Funções
+#------------------
 def authenticate():
     url = f"{SPTRANS_BASE_URL}/Login/Autenticar?token={SPTRANS_API_KEY}"
     response = session.post(url)
@@ -46,21 +46,29 @@ def upload_to_minio(data):
         secure=False
     )
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    file_name = f"bus_positions_{timestamp}.json"
+    now = datetime.now(timezone.utc)
+    year = now.strftime("%Y")
+    month = now.strftime("%m")
+    day = now.strftime("%d")
+    timestamp = now.strftime("%Y%m%d_%H%M%S")
+
+    object_name = f"posicao/{year}/{month}/{day}/bus_positions_{timestamp}.json"
 
     data_bytes = io.BytesIO(json.dumps(data).encode("utf-8"))
 
     client.put_object(
-        MINIO_BUCKET,
-        file_name,
-        data_bytes,
+        bucket_name=MINIO_BUCKET,
+        object_name=object_name,
+        data=data_bytes,
         length=len(data_bytes.getvalue()),
         content_type="application/json"
     )
 
-    print(f"✅ Uploaded {file_name} to MinIO/{MINIO_BUCKET}")
+    print(f"✅ Uploaded {object_name} to MinIO/{MINIO_BUCKET}")
 
+#------------------
+# Main
+#------------------
 def main():
     try:
         authenticate()
