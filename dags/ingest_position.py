@@ -8,8 +8,14 @@ import io
 from minio import Minio
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv("/opt/airflow/.env")
+# Configurações
+if os.path.exists("/opt/airflow/.env"):
+    load_dotenv("/opt/airflow/.env")
+    print("📦 .env carregado de /opt/airflow/.env (Airflow container)")
+# senão, carrega o .env local
+else:
+    load_dotenv()
+    print("💻 .env carregado do diretório local")
 
 SPTRANS_BASE_URL = "https://api.olhovivo.sptrans.com.br/v2.1"
 SPTRANS_API_KEY = os.getenv("SPTRANS_API_KEY")
@@ -21,6 +27,7 @@ MINIO_BUCKET = "bronze"
 
 session = requests.Session()
 
+# Autenticação da API
 def authenticate():
     url = f"{SPTRANS_BASE_URL}/Login/Autenticar?token={SPTRANS_API_KEY}"
     response = session.post(url)
@@ -45,7 +52,7 @@ def upload_to_minio(data):
         secure=False
     )
 
-    #Criando o particionamento do bucket
+    #Particionamento por data
     now = datetime.now(timezone.utc)
     year = now.strftime("%Y")
     month = now.strftime("%m")
@@ -70,6 +77,7 @@ def fetch_and_upload_bus_positions():
     authenticate()
     data = get_bus_positions()
     upload_to_minio(data)
+
 
 # Define the DAG
 with DAG(
