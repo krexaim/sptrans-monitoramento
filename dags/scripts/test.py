@@ -1,26 +1,33 @@
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from datetime import datetime, timezone, timedelta
 import os
 import requests
 import json
 import io
+from datetime import datetime, timezone
 from minio import Minio
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv("/opt/airflow/.env")
+#------------------------
+# Configuração
+#------------------------
+load_dotenv()
 
 SPTRANS_BASE_URL = "https://api.olhovivo.sptrans.com.br/v2.1"
 SPTRANS_API_KEY = os.getenv("SPTRANS_API_KEY")
 
-MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT")
+if os.getenv("AIRFLOW_ENV") == "docker":     # Configura o minio endpoint para localhost se for local ou minio:9000 se for no docker/airflow
+    MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT_DOCKER")
+else:
+    MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT_LOCAL")
+
 MINIO_ACCESS_KEY = os.getenv("MINIO_ROOT_USER")
 MINIO_SECRET_KEY = os.getenv("MINIO_ROOT_PASSWORD")
 MINIO_BUCKET = "bronze"
 
 session = requests.Session()
 
+#------------------------
+#Funções
+#------------------------
 def authenticate():
     url = f"{SPTRANS_BASE_URL}/Login/Autenticar?token={SPTRANS_API_KEY}"
     response = session.post(url)
@@ -45,35 +52,36 @@ def upload_to_minio(data):
         secure=False
     )
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    file_name = f"bus_positions_{timestamp}.json"
+    now = datetime.now(timezone.utc)
+    year = now.strftime("%Y")
+    month = now.strftime("%m")
+    day = now.strftime("%d")
+    timestamp = now.strftime("%Y%m%d_%H%M%S")
+
+    object_name = f"posicao/{year}/{month}/{day}/bus_positions_{timestamp}.json"
 
     data_bytes = io.BytesIO(json.dumps(data).encode("utf-8"))
 
     client.put_object(
-        MINIO_BUCKET,
-        file_name,
-        data_bytes,
+        bucket_name=MINIO_BUCKET,
+        object_name=object_name,
+        data=data_bytes,
         length=len(data_bytes.getvalue()),
         content_type="application/json"
     )
 
-    print(f"✅ Uploaded {file_name} to MinIO/{MINIO_BUCKET}")
+    print(f"✅ Uploaded {object_name} to MinIO/{MINIO_BUCKET}")
 
-def fetch_and_upload_bus_positions():
-    authenticate()
-    data = get_bus_positions()
-    upload_to_minio(data)
+#------------------------
+# Main
+#------------------------
+def main():
+    try:
+        authenticate()
+        data = get_bus_positions()
+        upload_to_minio(data)
+    except Exception as e:
+        print(f"❌ Error: {e}")
 
-# Define the DAG
-with DAG(
-    dag_id="sptrans_bus_positions",
-    start_date=datetime(2025, 10, 10),
-    schedule_interval=timedelta(minutes=2),
-    catchup=False,
-    tags=["sptrans"]
-) as dag:
-    task_fetch_and_upload = PythonOperator(
-        task_id="fetch_and_upload_bus_positions",
-        python_callable=fetch_and_upload_bus_positions
-    )
+if __name__ == "__main__":
+    main()   
