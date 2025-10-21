@@ -13,7 +13,12 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Pegar dados do SPTrans API e faz upload pro MinIO.")
-    parser.add_argument("--dataset", type=str, required=True, help="Nome do dataset (ex: posicao, linhas, paradas)")
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        required=True,
+        help="Nome do dataset (ex: posicao, linhas, paradas)"
+    )
     args = parser.parse_args()
 
     try:
