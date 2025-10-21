@@ -2,7 +2,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 
-from scripts.ingest_bronze import fetch_and_upload
+from utils.ingest_bronze import fetch_and_upload
 
 with DAG(
     dag_id="ingest_to_bronze",
