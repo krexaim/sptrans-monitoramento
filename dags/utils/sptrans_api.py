@@ -8,8 +8,9 @@ session = requests.Session()
 # ENDPOINTS
 #------------------
 ENDPOINTS = { # {dataset : endpoint}
-    "posicao": "/Posicao"
-    # adicionar endpoints
+    "posicao": "/Posicao",
+    "linhas": "/Linha/Buscar?termosBusca=a",     
+    "paradas": "/Parada/Buscar?termosBusca=a",
 }
 
 def authenticate():
