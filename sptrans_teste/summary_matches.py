@@ -99,7 +99,8 @@ def extract_fields_from_json(path: str, normalize_mode: str):
                 continue
             norm = normalize_value(val, normalize_mode)  # normaliza o valor
             if norm != '':
-                field_values[path_key].add(norm)          # adiciona ao conjunto
+                field_values[path_key].add(norm)          # adiciona ao 
+    print (field_values)
     return field_values
 
 # --------------------------------------------------------
@@ -200,3 +201,4 @@ def main():
 # --------------------------------------------------------
 if __name__ == '__main__':
     main()
+    

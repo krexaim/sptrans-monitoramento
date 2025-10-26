@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
 import os
 from pathlib import Path
 import pandas as pd
 from sqlalchemy import create_engine
+from dotenv import load_dotenv, find_dotenv
 
 # -----------------------------
 # Configurações do Postgres
