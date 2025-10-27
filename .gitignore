@@ -43,3 +43,9 @@ airflow/airflow.db
 *.zip
 *.tar
 *.gz
+
+# Spark
+*.ipython
+*.cache
+*.jupyter
+*.local
