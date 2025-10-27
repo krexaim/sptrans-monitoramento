@@ -1,4 +1,4 @@
-Fluxo recomendado (prático para Airflow + NRT)
+#Fluxo recomendado (prático para Airflow + NRT)
 
 PySpark (task Airflow) — transforma e grava Parquet particionado em MinIO (S3 path).
 
@@ -6,7 +6,7 @@ DuckDB (task Airflow PythonOperator) — conecta ao DuckDB e executa CREATE TABL
 
 (Opcional) Persistir DuckDB .db ou manter DuckDB em memória para consultas ad-hoc. Se precisar de persistência compartilhada, prefira exportar tabelas/Parquet curados para um formato acessível pelos consumidores.
 
-Considerações de performance e NRT
+#Considerações de performance e NRT
 
 Latência: DuckDB lendo muitos pequenos ficheiros Parquet(chunks) em S3 pode gerar muitas requisições HTTP (overhead). Para NRT, prefira fewer larger files ou particionamento bem pensado. Monitorar número de requests ao MinIO. 
 Server Fault
@@ -16,7 +16,7 @@ Miles Cole
 
 Consistência: assegure que Spark finalize e escreva atomically os arquivos (por exemplo, escrever em path tmp e renomear/atomizar) antes do job DuckDB ler.
 
-Conclusão / Recomendação
+#Conclusão / Recomendação
 
 Para um pipeline PySpark + Airflow em ambiente NRT + MinIO:
 
