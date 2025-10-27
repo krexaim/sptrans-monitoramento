@@ -1,0 +1,12 @@
+parametro,correspondencia,agency.txt,calendar.txt,fare_attributes.txt,fare_rules.txt,frequencies.txt,routes.txt,shapes.txt,stop_times.txt,stops.txt,trips.txt
+c,fare_rules.txt;routes.txt;stops.txt;trips.txt,0,0,0,1,0,1,0,0,1,1
+cl,frequencies.txt;shapes.txt;stop_times.txt;stops.txt,0,0,0,0,1,0,1,1,1,0
+lt0,stops.txt;trips.txt,0,0,0,0,0,0,0,0,1,1
+lt1,stops.txt;trips.txt,0,0,0,0,0,0,0,0,1,1
+qv,agency.txt;calendar.txt;routes.txt;shapes.txt;stop_times.txt;stops.txt;trips.txt,1,1,0,0,0,1,1,1,1,1
+sl,agency.txt;calendar.txt;routes.txt;shapes.txt;stop_times.txt;stops.txt;trips.txt,1,1,0,0,0,1,1,1,1,1
+vs.a,,0,0,0,0,0,0,0,0,0,0
+vs.p,shapes.txt;stops.txt;trips.txt,0,0,0,0,0,0,1,0,1,1
+vs.px,shapes.txt;stops.txt,0,0,0,0,0,0,1,0,1,0
+vs.py,shapes.txt;stops.txt,0,0,0,0,0,0,1,0,1,0
+vs.ta,,0,0,0,0,0,0,0,0,0,0
