@@ -33,6 +33,22 @@ DuckDB
 +2
 
 
+pip install pyspark
+pip install duckdb
+
+
+
+Observação: o mc (MinIO Client) não é Python, deve ser instalado no OS/Worker Airflow via apt/yum ou download binário:
+
+curl -O https://dl.min.io/client/mc/release/linux-amd64/mc
+chmod +x mc
+mv mc /usr/local/bin/
+
+
+
+
+
+
 ├── dags/
 │   └── trusted_load.py           # DAG principal que orquestra a execução
 │
