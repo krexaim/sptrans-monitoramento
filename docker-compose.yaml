@@ -97,7 +97,9 @@ services:
       - 4043:4043
       - 8180:8080
       - 7077:7077
+    env_file:
+      - .env
     volumes:
       - ./spark/util:/util/
-      - ./spark/work:/home/user
+      - ./spark/work/.notebooks/:/home/user/work/
       - ./spark/env:/env
