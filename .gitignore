@@ -45,7 +45,7 @@ airflow/airflow.db
 *.gz
 
 # Spark
-.ipynb_checkpoints/
+*.ipynb_checkpoints/
 *.ipython
 *.cache
 *.jupyter
