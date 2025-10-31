@@ -17,11 +17,11 @@ with DAG(
         python_callable=lambda: fetch_and_upload("posicao")
     )
 
-    # exemplos
-    # task_linhas = PythonOperator(
-    #     task_id="fetch_linhas",
-    #     python_callable=lambda: fetch_and_upload("linhas")
-    # )
+    
+    #  task_linhas = PythonOperator(
+    #      task_id="fetch_linhas",
+    #      python_callable=lambda: fetch_and_upload_linhas("linhas")
+    #  )
 
     # task_previsao = PythonOperator(
     #    task_id="fetch_previsao",

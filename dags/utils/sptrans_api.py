@@ -36,20 +36,25 @@ def fetch_data(dataset_name):
         raise Exception(f"❌ Failed to get {dataset_name}: {response.status_code} - {response.text}")
 
 def fetch_data_linhas():
+     authenticate()
     linhas = []
-    with open ("bus_route_ids.txt", 'r') as arquivo:
-     for linha in arquivo:
-            linhas.append(linha.strip())
+    termos = list("123456789n")
 
-    endpoint = "/Linha/Buscar?termosBusca={linhas}"   
-    url = f"{SPTRANS_BASE_URL}{endpoint}"
-    print(f"Fetching linhas from {url}")
+    for termo in termos:
+        url = f"{SPTRANS_BASE_URL}/Linha/Buscar?termosBusca={termo}"
+        resp = session.get(url)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data:
+                linhas.extend(data)
+    # remover duplicadas
+    unique_linhas = {linha["cl"]: linha for linha in linhas}
+    return list(unique_linhas.values())
 
-    response = session.get(url)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        raise Exception(f"❌ Failed to get linhas: {response.status_code} - {response.text}")
+def salvar_em_json(dados, nome_arquivo):
+    """Salva uma lista ou dict em arquivo JSON local"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_name = f"{nome_arquivo}_{timestamp}.json"
     
 # adicionar mais funcoes depois
 #def get_bus_previsao():

@@ -10,6 +10,7 @@ def fetch_and_upload(dataset_name):
         raise Exception(f"❌ Erro ao processar dataset '{dataset_name}': {e}")
 
 def fetch_and_upload_linhas(dataset_name):
+    for 
     try:
         authenticate()
         data = fetch_data_linhas(dataset_name)
