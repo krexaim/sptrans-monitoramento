@@ -35,6 +35,22 @@ def fetch_data(dataset_name):
     else:
         raise Exception(f"❌ Failed to get {dataset_name}: {response.status_code} - {response.text}")
 
+def fetch_data_linhas():
+    linhas = []
+    with open ("bus_route_ids.txt", 'r') as arquivo:
+     for linha in arquivo:
+            linhas.append(linha.strip())
+
+    endpoint = "/Linha/Buscar?termosBusca={linhas}"   
+    url = f"{SPTRANS_BASE_URL}{endpoint}"
+    print(f"Fetching linhas from {url}")
+
+    response = session.get(url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise Exception(f"❌ Failed to get linhas: {response.status_code} - {response.text}")
+    
 # adicionar mais funcoes depois
 #def get_bus_previsao():
 #   url = f"{SPTRANS_BASE_URL}/Previsao/ParaParada?codigoLinha={{codigoLinha}}&parada={{codigoParada}}"

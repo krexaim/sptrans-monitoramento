@@ -1,10 +1,18 @@
-from .sptrans_api import authenticate, fetch_data, ENDPOINTS, SPTRANS_BASE_URL, session
+from .sptrans_api import authenticate, fetch_data, fetch_data_linhas ENDPOINTS, SPTRANS_BASE_URL, session
 from .minio_utils import upload_to_minio
 
 def fetch_and_upload(dataset_name):
     try:
         authenticate()
         data = fetch_data(dataset_name)
+        upload_to_minio(data, dataset_name)
+    except Exception as e:
+        raise Exception(f"❌ Erro ao processar dataset '{dataset_name}': {e}")
+
+def fetch_and_upload_linhas(dataset_name):
+    try:
+        authenticate()
+        data = fetch_data_linhas(dataset_name)
         upload_to_minio(data, dataset_name)
     except Exception as e:
         raise Exception(f"❌ Erro ao processar dataset '{dataset_name}': {e}")
