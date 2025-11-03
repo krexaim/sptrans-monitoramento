@@ -4,7 +4,7 @@ USER root
 
 # Instala Java + dependências
 RUN apt-get update -o Acquire::Retries=5 \
- && apt-get install -y --no-install-recommends openjdk-11-jdk curl wget ca-certificates gnupg \
+ && apt-get install -y --no-install-recommends openjdk-11-jdk-headless curl wget ca-certificates gnupg \
  && rm -rf /var/lib/apt/lists/*
 
 # Instala o Spark client 
