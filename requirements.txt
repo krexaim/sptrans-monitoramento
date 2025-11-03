@@ -3,4 +3,4 @@ minio
 python-dotenv
 apache-airflow==2.10.2
 pyspark
-delta-spark
+apache-airflow-providers-apache-spark
