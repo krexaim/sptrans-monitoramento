@@ -25,11 +25,11 @@ jobs:
           context: ./airflow
           file: ./airflow/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/airflow-spark:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/airflow-spark:latest
           platforms: linux/amd64
 
       # -----------------------------
-      # ✅ 4. (Opcional) Testar o build
+      # Testar o build
       # -----------------------------
       - name: Verify image built
-        run: docker run --rm ${{ secrets.DOCKERHUB_USERNAME }}/airflow-spark:latest airflow version
+        run: docker run --rm ${{ secrets.DOCKER_USERNAME }}/airflow-spark:latest airflow version
