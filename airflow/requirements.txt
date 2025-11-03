@@ -1,0 +1,6 @@
+requests
+minio
+python-dotenv
+apache-airflow==2.10.2
+pyspark
+apache-airflow-providers-apache-spark
