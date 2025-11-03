@@ -43,3 +43,11 @@ airflow/airflow.db
 *.zip
 *.tar
 *.gz
+
+# Spark
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+*.ipython
+*.cache
+*.jupyter
+*.local
