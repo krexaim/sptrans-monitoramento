@@ -3,8 +3,9 @@ FROM apache/airflow:2.10.2-python3.11
 USER root
 
 # Instala Java + dependências
-RUN apt-get update && apt-get install -y openjdk-11-jdk curl wget && \
-    apt-get clean
+RUN apt-get update -o Acquire::Retries=5 \
+ && apt-get install -y --no-install-recommends openjdk-11-jdk curl wget ca-certificates gnupg \
+ && rm -rf /var/lib/apt/lists/*
 
 # Instala o Spark client 
 ENV SPARK_VERSION=3.5.0
@@ -18,4 +19,9 @@ ENV SPARK_HOME=/usr/local/spark
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH=$PATH:$SPARK_HOME/bin:$JAVA_HOME/bin
 
+COPY requirements.txt /requirements.txt
+RUN pip install --no-cache-dir -r /requirements.txt
+
 USER airflow
+
+WORKDIR /opt/airflow
