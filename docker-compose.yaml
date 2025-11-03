@@ -103,3 +103,4 @@ services:
       - ./spark/util:/util/
       - ./spark/work/.notebooks/:/home/user/work/
       - ./spark/env:/env
+      - ./dags/utils:/opt/airflow/dags/utils
