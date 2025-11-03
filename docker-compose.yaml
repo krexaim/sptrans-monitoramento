@@ -16,6 +16,8 @@ services:
       retries: 5
       start_period: 5s
     restart: always
+    networks:
+      - sptrans-net
 
   minio:
     image:  quay.io/minio/minio:RELEASE.2025-02-28T09-55-16Z
@@ -34,6 +36,8 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin
     volumes: 
       - ./data/minio:/minio_data
+    networks:
+      - sptrans-net      
   # mc:
   #   image: minio/mc:RELEASE.2025-04-08T15-39-49Z
   #   container_name: mc
@@ -43,40 +47,42 @@ services:
   #     /bin/sh -c ""
       
   airflow:
-   image: apache/airflow:2.10.2-python3.11
-   container_name: airflow
-   depends_on:
-     postgres:
-       condition: service_healthy
-     minio:
-       condition: service_started
-   environment:
-     AIRFLOW__CORE__EXECUTOR: LocalExecutor
-     AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-     AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: "True"
-     AIRFLOW_ENV: docker
-   ports:
-     - "8080:8080"
-   volumes:
-     - ./dags:/opt/airflow/dags
-     - ./airflow/plugins:/opt/airflow/plugins
-     - ./airflow/config/airflow.cfg:/opt/airflow/airflow.cfg
-     - ./requirements.txt:/requirements.txt
-     - ./.env:/opt/airflow/.env
-   command: >
-     bash -c "
-     pip install --no-cache-dir -r /requirements.txt &&
-     airflow db init &&
-     airflow users create --username admin --firstname admin --lastname admin --role Admin --email admin@example.com --password admin &&
-     airflow standalone
-     "
-   healthcheck:
-     test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
-     interval: 30s
-     timeout: 10s
-     retries: 5
-   restart: always
+    image: apache/airflow:2.10.2-python3.11
+    container_name: airflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: "True"
+      AIRFLOW_ENV: docker
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/config/airflow.cfg:/opt/airflow/airflow.cfg
+      - ./requirements.txt:/requirements.txt
+      - ./.env:/opt/airflow/.env
+    command: >
+      bash -c "
+      pip install --no-cache-dir -r /requirements.txt &&
+      airflow db init &&
+      airflow users create --username admin --firstname admin --lastname admin --role Admin --email admin@example.com --password admin &&
+      airflow standalone
+      "
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: always
+    networks:
+       - sptrans-net   
 
   spark:
     platform: linux/amd64
@@ -90,13 +96,13 @@ services:
         /usr/local/spark/sbin/start-master.sh
         start-notebook.sh --NotebookApp.token=''
     ports:
-      - 8889:8888
-      - 4040:4040
+      - 8889:8888 # jupyter
+      - 4040:4040 # spark ui
       - 4041:4041
       - 4042:4042
       - 4043:4043
-      - 8180:8080
-      - 7077:7077
+      - 8180:8080 # spark master web ui
+      - 7077:7077 # spark master // spark-submit
     env_file:
       - .env
     volumes:
@@ -104,3 +110,9 @@ services:
       - ./spark/work/.notebooks/:/home/user/work/
       - ./spark/env:/env
       - ./dags/utils:/opt/airflow/dags/utils
+    networks:
+      - sptrans-net
+
+networks:
+  sptrans-net:
+    driver: bridge
