@@ -11,9 +11,9 @@ ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 WORKDIR /opt/airflow
 
 # Copia o requirements
-COPY requirements.txt /requirements.txt
+COPY requirements.txt /opt/airflow/requirements.txt
 
 USER airflow
 
 # Instala dependências Python do projeto
-RUN pip install --no-cache-dir -r /requirements.txt
+RUN pip install --no-cache-dir -r /opt/airflow/requirements.txt
