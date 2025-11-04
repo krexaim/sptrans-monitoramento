@@ -22,6 +22,7 @@ with DAG(
         task_id="transform_bronze_to_silver",
         application="/opt/airflow/dags/utils/transform_bronze_parquet.py",
         conn_id="spark_default",
+        conf={'spark.master': 'spark://spark:7077'},
         verbose=True,
     )    
 

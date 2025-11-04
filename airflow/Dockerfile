@@ -14,6 +14,7 @@ WORKDIR /opt/airflow
 COPY requirements.txt /opt/airflow/requirements.txt
 
 USER airflow
+ENV PYTHONPATH="${PYTHONPATH}:/home/airflow/.local/lib/python3.11/site-packages"
 
 # Instala dependências Python do projeto
 RUN pip install --no-cache-dir -r /opt/airflow/requirements.txt
