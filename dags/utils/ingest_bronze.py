@@ -1,23 +1,21 @@
-from .sptrans_api import authenticate, fetch_data, fetch_data_linhas ENDPOINTS, SPTRANS_BASE_URL, session
+from .sptrans_api import authenticate, fetch_data_posicao, fetch_data_linhas
 from .minio_utils import upload_to_minio
+
+FETCH_FUNCS = {
+    "posicao": fetch_data_posicao,
+    "linhas": fetch_data_linhas,
+}
 
 def fetch_and_upload(dataset_name):
     try:
         authenticate()
-        data = fetch_data(dataset_name)
+        if dataset_name not in FETCH_FUNCS:
+            raise ValueError(f"Dataset '{dataset_name}' não suportado.")
+        data = FETCH_FUNCS[dataset_name]()
         upload_to_minio(data, dataset_name)
     except Exception as e:
         raise Exception(f"❌ Erro ao processar dataset '{dataset_name}': {e}")
-
-def fetch_and_upload_linhas(dataset_name):
-    for 
-    try:
-        authenticate()
-        data = fetch_data_linhas(dataset_name)
-        upload_to_minio(data, dataset_name)
-    except Exception as e:
-        raise Exception(f"❌ Erro ao processar dataset '{dataset_name}': {e}")
-
+    
 if __name__ == "__main__":
     import argparse
 

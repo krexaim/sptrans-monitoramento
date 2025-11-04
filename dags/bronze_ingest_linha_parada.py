@@ -1,33 +1,31 @@
-import json
-from datetime import datetime
-from .sptrans_api import authenticate, session, SPTRANS_BASE_URL
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from datetime import datetime, timedelta
 
-def get_all_linhas():
-    authenticate()
-    linhas = []
-    termos = list("123456789n")
+from utils.ingest_bronze import fetch_and_upload
 
-    for termo in termos:
-        url = f"{SPTRANS_BASE_URL}/Linha/Buscar?termosBusca={termo}"
-        resp = session.get(url)
-        if resp.status_code == 200:
-            data = resp.json()
-            if data:
-                linhas.extend(data)
-    # remover duplicadas
-    unique_linhas = {linha["cl"]: linha for linha in linhas}
-    return list(unique_linhas.values())
+with DAG(
+    dag_id="ingest_to_bronze_linhas",
+    start_date=datetime(2025, 10, 10),
+    schedule_interval=None,
+    catchup=False,
+    tags=["sptrans"]
+) as dag:    
 
-def salvar_em_json(dados, nome_arquivo):
-    """Salva uma lista ou dict em arquivo JSON local"""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_name = f"{nome_arquivo}_{timestamp}.json"
+    task_linhas = PythonOperator(
+        task_id="fetch_linhas",
+        python_callable=lambda: fetch_and_upload("linhas")
+    )
 
-    with open(file_name, "w", encoding="utf-8") as f:
-        json.dump(dados, f, ensure_ascii=False, indent=2)
     
-    print(f"✅ Dados salvos em: {file_name}")
+    #  task_linhas = PythonOperator(
+    #      task_id="fetch_linhas",
+    #      python_callable=lambda: fetch_and_upload_linhas("linhas")
+    #  )
 
-if __name__ == "__main__":
-    linhas = get_all_linhas()
-    salvar_em_json(linhas, "linhas_ref")
+    # task_previsao = PythonOperator(
+    #    task_id="fetch_previsao",
+    #    python_callable=lambda: fetch_and_upload("previsao")
+    # )
+    # ordem
+    #  task_posicao >> etc.
