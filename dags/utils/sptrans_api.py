@@ -22,6 +22,28 @@ def fetch_data_posicao():
         return response.json()
     else:
         raise Exception(f"❌ Failed to get posição: {response.status_code} - {response.text}")
+    
+def fetch_data_linhas():
+    authenticate()
+    linhas = {}
+    termos = list("123456789n")  # letras e dígitos cobrem praticamente todas as linhas
+
+    for termo in termos:
+        url = f"{SPTRANS_BASE_URL}/Linha/Buscar?termosBusca={termo}"
+        try:
+            resp = session.get(url, timeout=10)
+            resp.raise_for_status()
+            for linha in resp.json():
+                # Usa o código da linha como chave (único)
+                linhas[linha["cl"]] = linha
+        except Exception as e:
+            print(f"⚠️ Erro ao buscar termo '{termo}': {e}")
+
+    print(f"✅ Total de linhas únicas coletadas: {len(linhas)}")
+    return list(linhas.values())
+
+def fetch_data_paradas():
+    return True
 
 
 # adicionar mais funcoes depois
