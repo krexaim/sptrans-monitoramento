@@ -19,11 +19,10 @@ RUN pip3 install pyspark==3.5.3 findspark
 # -----------------------------
 # 3️⃣ Baixar e configurar Apache Spark
 # -----------------------------
-ENV SPARK_VERSION=3.5.3
-RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
-    tar xvf spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
-    mv spark-${SPARK_VERSION}-bin-hadoop3 /opt/spark && \
-    rm spark-${SPARK_VERSION}-bin-hadoop3.tgz
+COPY spark-3.5.3-bin-hadoop3.tgz /tmp/
+RUN tar xvf /tmp/spark-3.5.3-bin-hadoop3.tgz && \
+    mv spark-3.5.3-bin-hadoop3 /opt/spark && \
+    rm /tmp/spark-3.5.3-bin-hadoop3.tgz
 
 # -----------------------------
 # 4️⃣ Variáveis de ambiente
