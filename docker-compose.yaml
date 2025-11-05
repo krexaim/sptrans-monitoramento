@@ -85,27 +85,35 @@ services:
      retries: 5
    restart: always
 
-  # spark:
-  #   platform: linux/amd64
-  #   image: fjardim/mds-spark
-  #   hostname: spark
-  #   container_name: spark
-  #   command:
-  #     - /bin/sh
-  #     - -c
-  #     - |
-  #       /usr/local/spark/sbin/start-master.sh
-  #       start-notebook.sh --NotebookApp.token=''
-  #   ports:
-  #     - 8889:8888
-  #     - 4040:4040
-  #     - 4041:4041
-  #     - 4042:4042
-  #     - 4043:4043
-  #     - 8180:8080
-  #     - 7077:7077
-  #   volumes:
-  #     - ./spark/util:/util/
-  #     - ./spark/work:/home/user
-  #     - ./spark/env:/env
-   
+  spark:
+    platform: linux/amd64
+    image: fjardim/mds-spark
+    hostname: spark
+    container_name: spark
+    command:
+      - /bin/sh
+      - -c
+      - |
+        /usr/local/spark/sbin/start-master.sh
+        start-notebook.sh --NotebookApp.token=''
+    ports:
+      - 8889:8888 # jupyter
+      - 4040:4040 # spark ui
+      - 4041:4041
+      - 4042:4042
+      - 4043:4043
+      - 8180:8080 # spark master web ui
+      - 7077:7077 # spark master // spark-submit
+    env_file:
+      - .env
+    volumes:
+      - ./spark/util:/util/
+      - ./spark/work/.notebooks/:/home/user/work/
+      - ./spark/env:/env
+      - ./dags/utils:/opt/airflow/dags/utils
+    networks:
+      - sptrans-net
+
+networks:
+  sptrans-net:
+    driver: bridge
