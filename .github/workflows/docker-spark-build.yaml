@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - spark-scripts
+    paths:
+      - 'spark/Dockerfile.spark'
+      - 'github/workflows/docker-spark-build.yaml'     
 
 jobs:
   build-and-push:

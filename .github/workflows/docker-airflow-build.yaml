@@ -6,7 +6,7 @@ on:
       - spark-scripts
     paths:
       - 'airflow/Dockerfile'
-      - 'github/workflows/docker-airflow-build.yaml'
+      - '.github/workflows/docker-airflow-build.yaml'
 
 jobs:
   build-and-push:
