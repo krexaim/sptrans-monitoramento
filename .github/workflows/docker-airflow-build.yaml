@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - spark-scripts
+    paths:
+      - 'airflow/Dockerfile'
+      - 'github/workflows/docker-airflow-build.yaml'
 
 jobs:
   build-and-push:
@@ -25,7 +28,9 @@ jobs:
           context: ./airflow
           file: ./airflow/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/airflow-spark:latest
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/airflow-spark:latest
+            ${{ secrets.DOCKER_USERNAME }}/airflow-spark:${{ github.run_number }}
           platforms: linux/amd64
 
       # -----------------------------
