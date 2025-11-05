@@ -22,9 +22,14 @@ with DAG(
         task_id="transform_bronze_to_silver",
         application="/opt/airflow/dags/utils/transform_bronze_parquet.py",
         conn_id="spark_default",
-        conf={'spark.master': 'spark://spark:7077'},
+        name="arrow-spark",
         verbose=True,
-    )    
+        deploy_mode="client",
+        conf={
+            "spark.master": "local[*]"
+        },
+        jars="/opt/spark/jars/hadoop-aws-3.3.4.jar,/opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar",
+    )
 
     # exemplos
     # task_linhas = PythonOperator(
