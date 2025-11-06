@@ -130,26 +130,6 @@ services:
     networks:
       - sptrans-net
 
-  # spark:
-  #   image: alexbkim/spark-3.5.3:jartest
-  #   container_name: spark
-  #   hostname: spark
-  #   environment:
-  #     - AWS_ACCESS_KEY_ID=admin
-  #     - AWS_SECRET_ACCESS_KEY=minioadmin
-  #     - MINIO_ENDPOINT=http://minio:9000
-  #   ports:
-  #     - "7077:7077"    # Porta do Spark master
-  #     - "8081:8080"    # UI do Spark master
-  #     - "4040:4040"    # Spark UI dos jobs locais
-  #   volumes:
-  #     - ./dags/utils:/opt/workspace/utils
-  #     - ./dags:/opt/workspace/dags
-  #     - spark_conf:/opt/spark/conf
-  #     - spark_jars:/opt/spark/jars
-  #   networks:
-  #     - sptrans-net
-
   jupyter:
     image: jupyter/pyspark-notebook:latest
     container_name: jupyter
@@ -166,6 +146,8 @@ services:
     volumes:
       - ./notebooks:/home/jovyan/work
       - ./dags/utils:/opt/workspace/utils 
+      - .env:/opt/workspace/.env
+      - spark_jars:/usr/local/spark/jars
     depends_on:
       - spark
       - minio
@@ -173,41 +155,6 @@ services:
       start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --NotebookApp.allow_origin='*' --NotebookApp.allow_remote_access=True
     networks:
       - sptrans-net
-
-
-  # spark:
-  #   platform: linux/amd64
-  #   image: fjardim/mds-spark
-  #   hostname: spark
-  #   container_name: spark
-  #   command:
-  #     - /bin/bash
-  #     - -c
-  #     - |
-  #       export DEBIAN_FRONTEND=noninteractive && \
-  #       apt-get update -qq && \
-  #       apt-get install -yq rsync && \
-  #       mkdir -p /home/jovyan/spark-master && \
-  #       mkdir -p /usr/local/spark/logs && \
-  #       /usr/local/spark/sbin/start-master.sh && \
-  #       tail -f /usr/local/spark/logs/spark--org.apache.spark.deploy.master*.out
-  #   ports:
-  #     - 8889:8888 # jupyter
-  #     - 4040:4040 # spark ui
-  #     - 4041:4041
-  #     - 4042:4042
-  #     - 4043:4043
-  #     - 8180:8080 # spark master web ui
-  #     - 7077:7077 # spark master // spark-submit
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - ./spark/util:/util/
-  #     - ./spark/work/.notebooks/:/home/user/work/
-  #     - ./spark/env:/env
-  #     - ./dags/utils:/opt/airflow/dags/utils
-  #   networks:
-  #     - sptrans-net
 
 networks:
   sptrans-net:
