@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------
-# 🧱 Dockerfile.spark — Spark Standalone com PySpark + MinIO Connector
+# Dockerfile.spark — Spark Standalone with PySpark + MinIO Connector 
 # Base: Eclipse Temurin (OpenJDK 11)
 # -------------------------------------------------------------------
 FROM eclipse-temurin:11-jdk-jammy
@@ -12,9 +12,9 @@ RUN apt-get update && apt-get install -y \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
-# 2️⃣ Instalar PySpark e findspark
+# 2️⃣ Instalar PySpark, findspark, delta
 # -----------------------------
-RUN pip3 install pyspark==3.5.3 findspark
+RUN pip3 install pyspark==3.5.3 findspark delta-spark
 
 # -----------------------------
 # 3️⃣ Baixar e configurar Apache Spark
