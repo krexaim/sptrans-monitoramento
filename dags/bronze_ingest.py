@@ -31,15 +31,4 @@ with DAG(
         jars="/opt/spark/jars/hadoop-aws-3.3.4.jar,/opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar",
     )
 
-    # exemplos
-    # task_linhas = PythonOperator(
-    #     task_id="fetch_linhas",
-    #     python_callable=lambda: fetch_and_upload("linhas")
-    # )
-
-    # task_previsao = PythonOperator(
-    #    task_id="fetch_previsao",
-    #    python_callable=lambda: fetch_and_upload("previsao")
-    # )
-    # ordem
-    #  task_posicao >> etc.
+    task_posicao >> task_transform
