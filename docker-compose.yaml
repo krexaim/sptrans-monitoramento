@@ -61,6 +61,7 @@ services:
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: "True"
       AIRFLOW_ENV: docker
+      SPARK_CONF_DIR: /opt/spark/conf
     ports:
       - "8080:8080"
     volumes:
