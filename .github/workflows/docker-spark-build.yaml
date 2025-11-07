@@ -6,7 +6,8 @@ on:
       - spark-scripts
     paths:
       - 'spark/Dockerfile.spark'
-      - '.github/workflows/docker-spark-build.yaml'     
+      - '.github/workflows/docker-spark-build.yaml'
+      - 'spark/spark-defaults.conf'
 
 jobs:
   build-and-push:
