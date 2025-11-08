@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from utils.ingest_bronze import fetch_and_upload
 
 with DAG(
-    dag_id="ingestAndTransform_posicao",
+    dag_id="ingest_transform_posicao",
     start_date=datetime(2025, 10, 10),
     schedule_interval="*/2 * * * *",
     catchup=False,
@@ -19,8 +19,8 @@ with DAG(
     )
 
     task_transform = SparkSubmitOperator(
-        task_id="transform_posicao_bronzeToSilver",
-        application="/opt/airflow/dags/utils/transform_posicao_bronzeToSilver.py",
+        task_id="transform_posicao_bronze_silver",
+        application="/opt/airflow/dags/utils/transform_posicao_bronze_silver.py",
         conn_id="spark_default",
         name="arrow-spark",
         verbose=True,
