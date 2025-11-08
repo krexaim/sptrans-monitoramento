@@ -43,22 +43,20 @@ print(f"📂 Lendo Bronze: {BRONZE_PATH}")
 
 # Ler o json mais recente
 files_df = spark.read.format("binaryFile").load(BRONZE_PATH)
-files = [row.path for row in files_df.select("path").collect() if row.path.endswith(".json")]
-
-if not files:
-    print("⚠️ Nenhum arquivo JSON encontrado.")
-    spark.stop()
-    exit(0)
-
-latest_file = sorted(files)[-1]
-print(f"📦 Lendo arquivo mais recente: {latest_file}")
+latest_file_row = (
+    files_df.orderBy(F.col("modificationTime").desc())
+    .select("path")
+    .limit(1)
+    .collect()
+)
+latest_file = latest_file_row[0].path
 
 # ================================================================
 # Transformação
 # ================================================================
-df_raw = spark.read.option("mode", "PERMISSIVE").json(latest_file)
+df_raw = spark.read.option("mode", "PERMISSIVE").schema(schema).json(latest_file)
 
-if df_raw.isEmpty():
+if df_raw.isEmpty() or df_raw.filter(F.col("hr").isNull() | F.col("l").isNull()):
     print("⚠️ Arquivo vazio.")
     spark.stop()
     exit(0)
