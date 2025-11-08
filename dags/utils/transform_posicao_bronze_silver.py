@@ -3,12 +3,36 @@ from pyspark.sql import SparkSession, functions as F
 from pyspark.sql.types import *
 from delta.tables import DeltaTable
 
+# Spark: Configurações default em spark/spark-defaults.conf
 spark = (
     SparkSession.builder.appName("BronzeToSilver_Delta")
     .getOrCreate()
 )
-
 print("✅ SparkSession inicializada")
+
+# Schema explícito
+schema = StructType([
+    StructField("hr", StringType(), True),
+    StructField("l", ArrayType(
+        StructType([
+            StructField("c", StringType(), True),   # letreiro 
+            StructField("cl", IntegerType(), True), # código de linha
+            StructField("sl", IntegerType(), True), # sentido
+            StructField("lt0", StringType(), True), # terminal inicial
+            StructField("lt1", StringType(), True), # terminal final
+            StructField("qv", IntegerType(), True), # quantidade de veículos
+            StructField("vs", ArrayType(
+                StructType([
+                    StructField("p", IntegerType(), True),  # código do veículo
+                    StructField("a", BooleanType(), True),  # acessibilidade
+                    StructField("ta", StringType(), True),  # timestamp da API
+                    StructField("py", DoubleType(), True),  # latitude
+                    StructField("px", DoubleType(), True),  # longitude
+                ])
+            ), True)
+        ])
+    ), True)
+])
 
 # PATHS
 today = datetime.now().strftime("%Y/%m/%d")
@@ -66,7 +90,6 @@ df = (
         F.col("px").alias("longitude"),
         F.to_timestamp("hr").alias("hora_referencia"),
     )
-    .dropDuplicates(["codigo_veiculo", "hora_referencia"])
     .withColumn("latitude", F.round("latitude", 6))
     .withColumn("longitude", F.round("longitude", 6))
     .withColumn("data_ref", F.to_date("ultima_atualizacao"))
