@@ -56,7 +56,7 @@ latest_file = latest_file_row[0].path
 # ================================================================
 df_raw = spark.read.option("mode", "PERMISSIVE").schema(schema).json(latest_file)
 
-if df_raw.isEmpty() or df_raw.filter(F.col("hr").isNull() | F.col("l").isNull()):
+if df_raw.filter(F.col("hr").isNotNull() & F.col("l").isNotNull()).isEmpty():
     print("⚠️ Arquivo vazio.")
     spark.stop()
     exit(0)
