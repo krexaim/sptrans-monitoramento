@@ -6,11 +6,11 @@ from datetime import datetime, timedelta
 from utils.ingest_bronze import fetch_and_upload
 
 with DAG(
-    dag_id="ingest_to_bronze",
+    dag_id="ingestAndTransform_posicao",
     start_date=datetime(2025, 10, 10),
-    schedule_interval=None,#"*/2 * * * *",
+    schedule_interval="*/2 * * * *",
     catchup=False,
-    tags=["sptrans"]
+    tags=["sptrans", "ingest", "transform", "posicao"]
 ) as dag:    
 
     task_posicao = PythonOperator(
@@ -19,16 +19,12 @@ with DAG(
     )
 
     task_transform = SparkSubmitOperator(
-        task_id="transform_bronze_to_silver",
-        application="/opt/airflow/dags/utils/transform_bronze_parquet.py",
+        task_id="transform_posicao_bronzeToSilver",
+        application="/opt/airflow/dags/utils/transform_posicao_bronzeToSilver.py",
         conn_id="spark_default",
         name="arrow-spark",
         verbose=True,
         deploy_mode="client",
-        conf={
-            "spark.master": "local[*]"
-        },
-        jars="/opt/spark/jars/hadoop-aws-3.3.4.jar,/opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar",
     )
 
     task_posicao >> task_transform
