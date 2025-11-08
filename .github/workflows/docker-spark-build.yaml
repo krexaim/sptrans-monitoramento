@@ -1,0 +1,58 @@
+name: Build and Publish Spark Image
+
+on:
+  push:
+    branches:
+      - spark-scripts
+    paths:
+      - 'spark/Dockerfile.spark'
+      - '.github/workflows/docker-spark-build.yaml'
+      - 'spark/spark-defaults.conf'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache Spark binary
+        id: cache-spark
+        uses: actions/cache@v4
+        with:
+          path: spark/spark-3.5.3-bin-hadoop3.tgz
+          key: spark-3.5.3-binary
+
+      - name: Download Spark binary (if not cached)
+        if: steps.cache-spark.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p spark
+          wget -q https://archive.apache.org/dist/spark/spark-3.5.3/spark-3.5.3-bin-hadoop3.tgz -P spark/
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Spark image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./spark
+          file: ./spark/Dockerfile.spark
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/spark-3.5.3:latest
+            ${{ secrets.DOCKER_USERNAME }}/spark-3.5.3:${{ github.run_number }}
+          platforms: linux/amd64
+
+      # -----------------------------
+      # Testar o build
+      # -----------------------------
+      - name: Verify image built
+        run: |
+          docker run --rm ${{ secrets.DOCKER_USERNAME }}/spark-3.5.3:latest bash -c "
+            spark-submit --version &&
+            python3 -c 'from pyspark.sql import SparkSession; spark = SparkSession.builder.appName(\"test\").getOrCreate(); print(spark.version); spark.stop()'
+          "

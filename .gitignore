@@ -43,6 +43,7 @@ airflow/airflow.db
 *.zip
 *.tar
 *.gz
+*.tgz
 
 # Spark
 .ipynb_checkpoints
