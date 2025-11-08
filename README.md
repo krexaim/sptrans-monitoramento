@@ -2,7 +2,7 @@
 
 ## Objetivo
 Este projeto tem como objetivo desenvolver um pipeline de dados completo para o monitoramento do transporte público da cidade de São Paulo, utilizando a API Olho Vivo da SPTrans.
-O pipeline realiza a ingestão, transformação e disponibilização dos dados, orquestrado pelo Apache Airflow, com armazenamento no MinIO e processamento via PySpark. Os dados brutos são armazenados em camadas Bronze (JSON) e transformados em Silver e Gold (Parquet) para posterior análise e consumo.
+O pipeline realiza a ingestão, transformação e disponibilização dos dados, orquestrado pelo Apache Airflow, com armazenamento no MinIO e processamento via PySpark. Os dados brutos são armazenados em camadas Bronze (JSON) e transformados em Silver e Gold (Delta) para posterior análise e consumo via DuckDB e Metabase.
 
 O sistema coleta informações de posição dos ônibus a cada 2 minutos (batch), e os dados transformados alimentam um dashboard interativo, que exibirá informações em near real-time e KPIs operacionais do sistema de transporte.
 
@@ -12,23 +12,25 @@ O projeto tem foco em aprendizado e portfólio, aplicando boas práticas de enge
 
 imagem draw.io
 
-## Tecnologias Usadas
+## Stack de Tecnologias
 
 Docker - containerização e ambiente padronizado para todos os serviços
 
+API Olho Vivo (SPTrans) - fonte de dados em tempo real
+
 Python 3.13 - scripts de ingestão e transformação
-
-Apache Airflow 2.10 - orquestração de tarefas
-
-Apache Spark - processamento e transformação de dados
 
 MinIO - data lake para armazenamento de dados
 
-PostgreSQL 15 - banco relacional para consultas e dados tratados
+Apache Airflow 2.10 - orquestração de tarefas
+
+Apache Spark 3.5.3 - processamento e transformação de dados
+
+Delta Lake 3.3.2 - data lakehouse junto com o MinIO para armazenamento com suporte ACID e validação de schema
+
+DuckDB - banco de dados OLAP fazendo query SQL do Delta Lake
 
 Metabase - visualização de dados, criação de dashboards e KPIs
-
-API Olho Vivo (SPTrans) - fonte de dados em tempo real
 
 ## Estrutura de Pastas
 
@@ -41,7 +43,7 @@ Utilizando arquitetura medalhão:
 
 - Bronze: dados brutos em JSON, extraídos da API.
 
-- Silver: dados limpos e padronizados em Parquet.
+- Silver: dados limpos e padronizados em Delta.
 
 - Gold: dados analíticos prontos para dashboard/KPIs.
 
@@ -77,5 +79,12 @@ docker compose up -d
 |---|---|---|
 | [Airflow](http://localhost:8080/) | admin | admin |
 | [MinIO](http://localhost:9001/login) | admin | minioadmin |
+| [Spark Master UI](http://localhost:8081) | n/a | n/a|
+| Metabase | | |
 
 ## Autores:
+
+| Nome | Linkedin | Github | 
+| --- | --- | --- |
+| Alex Kim | | | 
+| Ítalo Berioni | | 
