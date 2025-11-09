@@ -1,83 +1,99 @@
-# utils/bronze_to_silver.py
+from pyspark.sql import SparkSession, functions as F, types as T
 
-from datetime import datetime
-from pyspark.sql import SparkSession
-from pyspark.sql.types import *
-from pyspark.sql.functions import (
-    col, explode, current_timestamp, to_date
+# --------------------------------------------------------------------
+# SparkSession - usando configs do spark-defaults.conf (MinIO, Delta, etc)
+# --------------------------------------------------------------------
+spark = (
+    SparkSession.builder
+    .appName("BronzeToSilver_Linhas")
+    .getOrCreate()
 )
-from pyspark.sql import functions as F
 
-def bronze_to_silver_linhas():
-    today = datetime.now().strftime("%Y/%m/%d")
-    BRONZE_PATH = f"s3a://bronze/linhas/{today}/"
-    SILVER_PATH = "s3a://silver/dim_linhas/"
+print("✅ SparkSession inicializada (linhas)")
 
-    spark = (
-        SparkSession.builder.appName("BronzeToSilver_Linhas_Parquet")
-        .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000")
-        .config("spark.hadoop.fs.s3a.access.key", "admin")
-        .config("spark.hadoop.fs.s3a.secret.key", "minioadmin")
-        .config("spark.hadoop.fs.s3a.path.style.access", True)
-        .getOrCreate()
-    )
+# --------------------------------------------------------------------
+# Caminhos no Data Lake
+# ajuste se seus caminhos forem diferentes
+# --------------------------------------------------------------------
+BRONZE_PATH = "s3a://bronze/linhas"
+SILVER_PATH = "s3a://silver/linhas"   # em Delta
 
-    # schema de linhas (array na raiz)
-    schema_item = StructType([
-        StructField("cl", IntegerType(), True),
-        StructField("lc", BooleanType(), True),
-        StructField("lt", StringType(), True),
-        StructField("sl", IntegerType(), True),
-        StructField("tl", IntegerType(), True),
-        StructField("tp", StringType(), True),
-        StructField("ts", StringType(), True),
-    ])
-    schema_array = ArrayType(schema_item)
+# --------------------------------------------------------------------
+# Leitura Bronze (JSON) - raiz é array de objetos
+# --------------------------------------------------------------------
+# Exemplo de arquivos:
+#  s3a://bronze/linhas/2025/11/07/linhas_20251107_032544.json
+# Pega todos os dias/pastas:
+bronze_pattern = f"{BRONZE_PATH.rstrip('/')}/*/*/*/*.json"
 
-    raw = (
-        spark.sparkContext
-             .wholeTextFiles(f"{BRONZE_PATH.rstrip('/')}" + "/*.json")
-             .toDF(["path", "raw"])
-    )
+df_raw = (
+    spark.read
+    .option("multiLine", True)  # arquivo é um array JSON
+    .json(bronze_pattern)
+)
 
-    df_arr = raw.select(
-        "path",
-        F.from_json(F.col("raw"), schema_array).alias("arr")
-    )
+# Adiciona o caminho do arquivo para extrair data
+df_raw = df_raw.withColumn("input_file", F.input_file_name())
 
-    df_lin = df_arr.select("path", explode(col("arr")).alias("r"))
+# --------------------------------------------------------------------
+# Extração de data_ref (equivalente ao antigo dt)
+# a partir do caminho: .../linhas/AAAA/MM/DD/arquivo.json
+# --------------------------------------------------------------------
+df = (
+    df_raw
+    .withColumn("ano",  F.regexp_extract("input_file", r"/linhas/(\\d{4})/(\\d{2})/(\\d{2})/", 1).cast("int"))
+    .withColumn("mes",  F.regexp_extract("input_file", r"/linhas/(\\d{4})/(\\d{2})/(\\d{2})/", 2).cast("int"))
+    .withColumn("dia",  F.regexp_extract("input_file", r"/linhas/(\\d{4})/(\\d{2})/(\\d{2})/", 3).cast("int"))
+    .withColumn("data_ref", F.to_date(F.concat_ws("-", "ano", "mes", "dia")))
+    .withColumn("ingest_timestamp", F.current_timestamp())
+)
 
-    df_clean = (
-        df_lin
-        .select(
-            col("r.cl").alias("line_id"),
-            col("r.lt").alias("line_code"),
-            col("r.sl").alias("sentido"),
-            col("r.tl").alias("tipo_linha"),
-            col("r.tp").alias("terminal_origem"),
-            col("r.ts").alias("terminal_destino"),
-        )
-        .dropDuplicates(["line_id", "line_code", "sentido"])
-        .withColumn("dt", to_date(current_timestamp()))
-        .withColumn("ingest_ts", current_timestamp())
-    )
+# --------------------------------------------------------------------
+# Renomeia colunas “cruas” da API para algo mais legível
+# (ajuste os nomes se você já estiver usando outro padrão)
+# --------------------------------------------------------------------
+df = (
+    df
+    .withColumnRenamed("cl", "codigo_linha_sptrans")   # id interno da SPTrans
+    .withColumnRenamed("lc", "linha_circular")         # bool
+    .withColumnRenamed("lt", "letreiro")               # ex: 8000
+    .withColumnRenamed("sl", "sentido")                # 1 / 2 etc
+    .withColumnRenamed("tl", "tipo_linha")             # se houver
+    .withColumnRenamed("tp", "terminal_principal")     # se houver
+    .withColumnRenamed("ts", "terminal_secundario")    # se houver
+)
 
-    (
-        df_clean
-        .write
-        .mode("overwrite")
-        .partitionBy("dt")
-        .parquet(SILVER_PATH)
-    )
+# Se você já tinha colunas dt e ingest_ts antes:
+# df = df.withColumnRenamed("dt", "data_ref").withColumnRenamed("ingest_ts", "ingest_timestamp")
 
-if __name__ == "__main__":
-    # 1. Inicia a sessão Spark
-    spark = SparkSession.builder \
-        .appName("BronzeToSilverLinhas") \
-        .getOrCreate()
+# Seleciona ordem final de colunas (ajuste conforme necessidade)
+colunas_final = [
+    "codigo_linha_sptrans",
+    "linha_circular",
+    "letreiro",
+    "sentido",
+    "tipo_linha",
+    "terminal_principal",
+    "terminal_secundario",
+    "data_ref",
+    "ingest_timestamp",
+]
 
-    # 2. Chama a função principal de transformação
-    bronze_to_silver_linhas(spark)
+df_silver = df.select(*[c for c in colunas_final if c in df.columns])
 
-    # 3. Encerra a sessão
-    spark.stop()
+# --------------------------------------------------------------------
+# Escrita em Silver (Delta), particionado por data_ref
+# --------------------------------------------------------------------
+(
+    df_silver
+    .write
+    .format("delta")
+    .mode("overwrite")           # snapshot completo; se quiser, depois troca por overwrite por partição
+    .partitionBy("data_ref")
+    .save(SILVER_PATH)
+)
+
+print("✅ Silver de LINHAS gravado em Delta em:", SILVER_PATH)
+
+spark.stop()
+print("✅ SparkSession finalizada (linhas)")
