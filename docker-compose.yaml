@@ -16,8 +16,6 @@ services:
       retries: 5
       start_period: 5s
     restart: always
-    networks:
-      - sptrans-net
 
   minio:
     image:  quay.io/minio/minio:RELEASE.2025-02-28T09-55-16Z
@@ -36,8 +34,6 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin
     volumes: 
       - ./data/minio:/minio_data
-    networks:
-      - sptrans-net      
   # mc:
   #   image: minio/mc:RELEASE.2025-04-08T15-39-49Z
   #   container_name: mc
@@ -47,119 +43,61 @@ services:
   #     /bin/sh -c ""
       
   airflow:
-    image: alexbkim/airflow-spark:latest
-    container_name: airflow
-    depends_on:
-      postgres:
-        condition: service_healthy
-      minio:
-        condition: service_started
-    environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__CORE__REMOTE_LOGGING: False
-      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-      AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: "True"
-      AIRFLOW_ENV: docker
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./airflow/plugins:/opt/airflow/plugins
-      - ./airflow/config/airflow.cfg:/opt/airflow/airflow.cfg
-      - ./airflow/requirements.txt:/opt/airflow/requirements.txt
-      - ./.env:/opt/airflow/.env
-      - spark_conf:/opt/spark/conf
-      - spark_jars:/opt/spark/jars
-    command: >
-      bash -c "
-      airflow db init &&
-      airflow users create --username admin --firstname admin --lastname admin --role Admin --email admin@example.com --password admin &&
-      airflow standalone
-      "
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    restart: always
-    networks:
-       - sptrans-net   
+   image: apache/airflow:2.10.2-python3.11
+   container_name: airflow
+   depends_on:
+     postgres:
+       condition: service_healthy
+     minio:
+       condition: service_started
+   environment:
+     AIRFLOW__CORE__EXECUTOR: LocalExecutor
+     AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+     AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: "True"
+     AIRFLOW_ENV: docker
+   ports:
+     - "8080:8080"
+   volumes:
+     - ./dags:/opt/airflow/dags
+     - ./airflow/plugins:/opt/airflow/plugins
+     - ./airflow/config/airflow.cfg:/opt/airflow/airflow.cfg
+     - ./requirements.txt:/requirements.txt
+     - ./.env:/opt/airflow/.env
+   command: >
+     bash -c "
+     pip install --no-cache-dir -r /requirements.txt &&
+     airflow db init &&
+     airflow users create --username admin --firstname admin --lastname admin --role Admin --email admin@example.com --password admin &&
+     airflow standalone
+     "
+   healthcheck:
+     test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+     interval: 30s
+     timeout: 10s
+     retries: 5
+   restart: always
 
   spark:
-    image: alexbkim/spark-3.5.3:latest
-    container_name: spark
+    platform: linux/amd64
+    image: fjardim/mds-spark
     hostname: spark
-    environment:
-      - SPARK_MODE=master
-      - SPARK_MASTER_HOST=0.0.0.0
-      - SPARK_MASTER_PORT=7077
-      - SPARK_MASTER_WEBUI_PORT=8080
-      - AWS_ACCESS_KEY_ID=admin
-      - AWS_SECRET_ACCESS_KEY=minioadmin
-      - MINIO_ENDPOINT=http://minio:9000
+    container_name: spark
+    command:
+      - /bin/sh
+      - -c
+      - |
+        /usr/local/spark/sbin/start-master.sh
+        start-notebook.sh --NotebookApp.token=''
     ports:
-      - "7077:7077"     # Porta do Spark Master
-      - "8081:8080"     # Spark Master UI
-      - "4040:4040"     # Spark Application UI (driver)
+      - 8889:8888
+      - 4040:4040
+      - 4041:4041
+      - 4042:4042
+      - 4043:4043
+      - 8180:8080
+      - 7077:7077
     volumes:
-      - ./dags/utils:/opt/workspace/utils
-      - ./dags:/opt/workspace/dags
-      - spark_conf:/opt/spark/conf
-      - spark_jars:/opt/spark/jars
-    networks:
-      - sptrans-net
-
-  spark-worker:
-    image: alexbkim/spark-3.5.3:latest
-    container_name: spark-worker
-    hostname: spark-worker
-    depends_on:
-      - spark
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER=spark://spark:7077
-      - SPARK_WORKER_CORES=2
-      - SPARK_WORKER_MEMORY=2G
-      - AWS_ACCESS_KEY_ID=admin
-      - AWS_SECRET_ACCESS_KEY=minioadmin
-      - MINIO_ENDPOINT=http://minio:9000
-    volumes:
-      - spark_conf:/opt/spark/conf
-      - spark_jars:/opt/spark/jars
-    networks:
-      - sptrans-net
-
-  jupyter:
-    image: jupyter/pyspark-notebook:latest
-    container_name: jupyter
-    ports:
-      - "8888:8888"
-    environment:
-      - SPARK_MASTER=spark://spark:7077
-      - AWS_ACCESS_KEY_ID=admin
-      - AWS_SECRET_ACCESS_KEY=minioadmin
-      - MINIO_ENDPOINT=http://minio:9000
-      - PYSPARK_PYTHON=python3
-      - PYSPARK_DRIVER_PYTHON=jupyter
-      - PYSPARK_DRIVER_PYTHON_OPTS=lab --ip=0.0.0.0 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''
-    volumes:
-      - ./notebooks:/home/jovyan/work
-      - ./dags/utils:/opt/workspace/utils 
-      - .env:/opt/workspace/.env
-      - spark_jars:/usr/local/spark/jars
-    depends_on:
-      - spark
-      - minio
-    command: >
-      start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --NotebookApp.allow_origin='*' --NotebookApp.allow_remote_access=True
-    networks:
-      - sptrans-net
-
-networks:
-  sptrans-net:
-    driver: bridge
-
-volumes:
-  spark_conf:
-  spark_jars:
+      - ./spark/util:/util/
+      - ./spark/work:/home/user
+      - ./spark/env:/env
