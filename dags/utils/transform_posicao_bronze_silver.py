@@ -1,0 +1,122 @@
+from datetime import datetime
+from pyspark.sql import SparkSession, functions as F
+from pyspark.sql.types import *
+from delta.tables import DeltaTable
+
+# Spark: Configurações default em spark/spark-defaults.conf
+spark = (
+    SparkSession.builder.appName("BronzeToSilver_Delta")
+    .getOrCreate()
+)
+print("✅ SparkSession inicializada")
+
+# Schema explícito
+schema = StructType([
+    StructField("hr", StringType(), True),
+    StructField("l", ArrayType(
+        StructType([
+            StructField("c", StringType(), True),   # letreiro 
+            StructField("cl", IntegerType(), True), # código de linha
+            StructField("sl", IntegerType(), True), # sentido
+            StructField("lt0", StringType(), True), # terminal inicial
+            StructField("lt1", StringType(), True), # terminal final
+            StructField("qv", IntegerType(), True), # quantidade de veículos
+            StructField("vs", ArrayType(
+                StructType([
+                    StructField("p", IntegerType(), True),  # código do veículo
+                    StructField("a", BooleanType(), True),  # acessibilidade
+                    StructField("ta", StringType(), True),  # timestamp da API
+                    StructField("py", DoubleType(), True),  # latitude
+                    StructField("px", DoubleType(), True),  # longitude
+                ])
+            ), True)
+        ])
+    ), True)
+])
+
+# PATHS
+today = datetime.now().strftime("%Y/%m/%d")
+BRONZE_PATH = f"s3a://bronze/posicao/{today}/"
+SILVER_PATH = "s3a://silver/posicao/"
+
+print(f"📂 Lendo Bronze: {BRONZE_PATH}")
+
+# Ler o json mais recente
+files_df = spark.read.format("binaryFile").load(BRONZE_PATH)
+latest_file_row = (
+    files_df.orderBy(F.col("modificationTime").desc())
+    .select("path")
+    .limit(1)
+    .collect()
+)
+latest_file = latest_file_row[0].path
+
+# ================================================================
+# Transformação
+# ================================================================
+df_raw = spark.read.option("mode", "PERMISSIVE").schema(schema).json(latest_file)
+
+if df_raw.filter(F.col("hr").isNotNull() & F.col("l").isNotNull()).isEmpty():
+    print("⚠️ Arquivo vazio.")
+    spark.stop()
+    exit(0)
+
+df = (
+    df_raw
+    .selectExpr("hr", "inline(l)")
+    .selectExpr(
+        "hr",
+        "c as letreiro",
+        "cl as codigo_linha",
+        "sl as sentido",
+        "lt0 as terminal_inicial",
+        "lt1 as terminal_final",
+        "qv",
+        "inline(vs)"
+    )
+    .filter("codigo_linha IS NOT NULL AND NOT (codigo_linha < 1000 OR letreiro RLIKE 'GUIN|TEST|TST')")
+    .select(
+        "letreiro",
+        "codigo_linha",
+        "sentido",
+        "terminal_inicial",
+        "terminal_final",
+        F.col("p").alias("codigo_veiculo"),
+        F.col("a").alias("acessibilidade"),
+        F.to_timestamp("ta").alias("ultima_atualizacao"),
+        F.col("py").alias("latitude"),
+        F.col("px").alias("longitude"),
+        F.to_timestamp("hr").alias("hora_referencia"),
+    )
+    .withColumn("latitude", F.round("latitude", 6))
+    .withColumn("longitude", F.round("longitude", 6))
+    .withColumn("data_ref", F.to_date("ultima_atualizacao"))
+    .withColumn("ingest_timestamp", F.current_timestamp())
+)
+
+# ================================================================
+# Escrita incremental
+# ================================================================
+if not DeltaTable.isDeltaTable(spark, SILVER_PATH):
+    print("🆕 Criando nova tabela Silver...")
+    (
+        df.write.format("delta")
+        .mode("overwrite")
+        .partitionBy("data_ref")
+        .save(SILVER_PATH)
+    )
+else:
+    print("🔁 Aplicando merge incremental...")
+    silver_table = DeltaTable.forPath(spark, SILVER_PATH)
+    (
+        silver_table.alias("tgt")
+        .merge(
+            df.alias("src"),
+            "tgt.codigo_veiculo = src.codigo_veiculo AND tgt.hora_referencia = src.hora_referencia"
+        )
+        .whenNotMatchedInsertAll()
+        .execute()
+    )
+
+print("✅ Transformação Bronze → Silver concluída.")
+spark.stop()
