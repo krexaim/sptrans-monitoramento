@@ -53,6 +53,15 @@ jobs:
       - name: Verify image built
         run: |
           docker run --rm ${{ secrets.DOCKER_USERNAME }}/spark-3.5.3:latest bash -c "
-            spark-submit --version &&
-            python3 -c 'from pyspark.sql import SparkSession; spark = SparkSession.builder.appName(\"test\").getOrCreate(); print(spark.version); spark.stop()'
+            echo 'Checking Spark version...'
+            spark-submit --version
+
+            echo -e '\nChecking Python version...'
+            python3 --version
+
+            echo -e '\nTesting SparkSession init...'
+            python3 -c 'from pyspark.sql import SparkSession; spark = SparkSession.builder.appName(\"test\").getOrCreate(); print(f\"Spark session OK: {spark.version}\"); spark.stop()'
+
+            echo -e '\nListing key JARs in /opt/spark/jars...'
+            ls -1 /opt/spark/jars/ | grep -E 'aws|delta' || echo 'No matching JARs found!'
           "
