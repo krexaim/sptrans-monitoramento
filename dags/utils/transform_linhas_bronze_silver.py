@@ -1,6 +1,5 @@
 from pyspark.sql import SparkSession, functions as F, types as T
 from datetime import datetime
-from delta.tables import DeltaTable
 import unicodedata
 
 # ------------------------------------------------------------
