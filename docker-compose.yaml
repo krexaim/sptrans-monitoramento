@@ -158,6 +158,30 @@ services:
     networks:
       - sptrans-net
 
+  duckdb:
+    image: duckdb/duckdb:1.4.1
+    container_name: duckdb
+    volumes:
+      - ./data/gold:/data/gold
+    networks:
+      - sptrans-net
+
+  metabase:
+    image: metabase/metabase:v0.56.13.x
+    container_name: metabase
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - MB_DB_FILE=/metabase.db
+    volumes:
+      - ./data/metabase:/metabase.db
+      - ./data/gold:/data/gold
+    depends_on:
+      - duckdb
+    networks:
+      - sptrans-net
+
 networks:
   sptrans-net:
     driver: bridge
