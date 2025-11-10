@@ -2,10 +2,21 @@ from datetime import datetime
 from pyspark.sql import SparkSession, functions as F
 from pyspark.sql.types import *
 from delta.tables import DeltaTable
+import unicodedata
+
+# Helper - remover acentos
+def strip_accents(txt: str):
+    if txt is None:
+        return None
+    txt_norm = unicodedata.normalize('NFD', txt)
+    return ''.join(c for c in txt_norm if unicodedata.category(c) != 'Mn')
+
+# UDF pra tirar acentos
+STRIP_ACCENTS = F.udf(strip_accents, StringType())
 
 # Spark: Configurações default em spark/spark-defaults.conf
 spark = (
-    SparkSession.builder.appName("BronzeToSilver_Delta")
+    SparkSession.builder.appName("BronzeToSilver_Posicao_Delta")
     .getOrCreate()
 )
 print("✅ SparkSession inicializada")
@@ -88,6 +99,8 @@ df = (
         F.col("px").alias("longitude"),
         F.to_timestamp("hr").alias("hora_referencia"),
     )
+    .withColumn("terminal_inicial", F.lower(STRIP_ACCENTS(F.col("terminal_inicial"))))
+    .withColumn("terminal_final",   F.lower(STRIP_ACCENTS(F.col("terminal_final"))))
     .withColumn("latitude", F.round("latitude", 6))
     .withColumn("longitude", F.round("longitude", 6))
     .withColumn("data_ref", F.to_date("ultima_atualizacao"))
