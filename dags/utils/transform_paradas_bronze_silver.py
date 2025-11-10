@@ -1,4 +1,17 @@
 from pyspark.sql import SparkSession, functions as F, types as T
+from datetime import datetime
+import unicodedata
+
+# ------------------------------------------------------------
+# Helper para remover acentos
+# ------------------------------------------------------------
+def strip_accents(txt: str):
+    if txt is None:
+        return None
+    txt_norm = unicodedata.normalize('NFD', txt)
+    return ''.join(c for c in txt_norm if unicodedata.category(c) != 'Mn')
+
+STRIP_ACCENTS = F.udf(strip_accents, T.StringType())
 
 # --------------------------------------------------------------------
 # SparkSession
@@ -8,119 +21,45 @@ spark = (
     .appName("BronzeToSilver_Paradas")
     .getOrCreate()
 )
-
 print("✅ SparkSession inicializada (paradas)")
 
 # --------------------------------------------------------------------
 # Caminhos
 # --------------------------------------------------------------------
-BRONZE_PATH = "s3a://bronze/paradas"
-SILVER_PATH = "s3a://silver/paradas"   # em Delta
-
-bronze_pattern = f"{BRONZE_PATH.rstrip('/')}/*/*/*/*.json"
-
-# --------------------------------------------------------------------
-# Leitura Bronze - JSON “mapa”: { "2486": [], "2497": [{...}, ...], ... }
-# Usando read.json (multiLine) e depois convertendo tudo para um MapType
-# --------------------------------------------------------------------
-df_json = (
-    spark.read
-    .option("multiLine", True)  # arquivo é um único objeto grande
-    .json(bronze_pattern)
-    .withColumn("path", F.input_file_name())
-)
-
-# df_json terá 1 linha por arquivo, com uma coluna por código de linha (2497, 2486, 35254, ...)
-# Vamos juntar tudo em um único JSON de volta, e depois parsear com schema de MAPA.
-
-cols_sem_path = [c for c in df_json.columns if c != "path"]
-
-df_raw = df_json.select(
-    "path",
-    F.to_json(F.struct(*[F.col(c) for c in cols_sem_path])).alias("raw")
-)
-
-# Schema do mapa: { linha (string) -> array de paradas }
-schema_paradas_mapa = T.MapType(
-    T.StringType(),
-    T.ArrayType(
-        T.StructType([
-            T.StructField("cp", T.LongType(), True),     # id do ponto
-            T.StructField("np", T.StringType(), True),   # nome do ponto
-            T.StructField("ed", T.StringType(), True),   # endereço / descrição
-            T.StructField("py", T.DoubleType(), True),   # latitude
-            T.StructField("px", T.DoubleType(), True),   # longitude
-        ])
-    )
-)
-
-df_mapa = df_raw.select(
-    "path",
-    F.from_json("raw", schema_paradas_mapa).alias("paradas_mapa")
-)
+today = datetime.now().strftime("%Y/%m/%d")
+BRONZE_PATH = f"s3a://bronze/paradas/{today}/"
+SILVER_PATH = "s3a://silver/paradas/"
+print(f"📂 Lendo Bronze: {BRONZE_PATH}")
 
 # --------------------------------------------------------------------
-# Explode: 1 linha por (linha, parada)
+# Leitura Bronze (JSON) 
 # --------------------------------------------------------------------
-df_explodido = (
-    df_mapa
+df_raw = spark.read.option("multiline", True).json(BRONZE_PATH)
+
+# Explode stops → 1 linha por parada
+df = (
+    df_raw
+    .filter(F.size("stops") > 0)  # remove linhas sem paradas
+    .withColumn("stop", F.explode("stops"))
     .select(
-        "path",
-        F.explode("paradas_mapa").alias("route_id", "lista_paradas")  # route_id = código da linha (chave do mapa)
+        F.col("route_id").alias("codigo_linha").cast("int"),
+        F.col("stop.cp").alias("codigo_parada").cast("int"),
+        F.col("stop.np").alias("nome_parada"),
+        F.col("stop.ed").alias("endereco"),
+        F.col("stop.py").alias("latitude"),
+        F.col("stop.px").alias("longitude"),
     )
-    .withColumn("parada", F.explode("lista_paradas"))
-)
-
-# Flatten dos campos da parada
-df_flat = (
-    df_explodido
-    .select(
-        "path",
-        "route_id",
-        F.col("parada.cp").alias("stop_id"),
-        F.col("parada.np").alias("stop_name"),
-        F.col("parada.ed").alias("stop_desc"),
-        F.col("parada.py").alias("stop_lat"),
-        F.col("parada.px").alias("stop_lon"),
-    )
-)
-
-# --------------------------------------------------------------------
-# data_ref e ingest_timestamp (padronização com GTFS / outros scripts)
-# --------------------------------------------------------------------
-df_flat = (
-    df_flat
-    .withColumn("ano",  F.regexp_extract("path", r"/paradas/(\\d{4})/(\\d{2})/(\\d{2})/", 1).cast("int"))
-    .withColumn("mes",  F.regexp_extract("path", r"/paradas/(\\d{4})/(\\d{2})/(\\d{2})/", 2).cast("int"))
-    .withColumn("dia",  F.regexp_extract("path", r"/paradas/(\\d{4})/(\\d{2})/(\\d{2})/", 3).cast("int"))
-    .withColumn("data_ref", F.to_date(F.concat_ws("-", "ano", "mes", "dia")))
+    .withColumn("nome_parada", F.lower(STRIP_ACCENTS(F.col("nome_parada"))))
+    .withColumn("endereco", F.lower(STRIP_ACCENTS(F.col("endereco"))))
+    .withColumn("data_ref", F.current_date())
     .withColumn("ingest_timestamp", F.current_timestamp())
 )
-
-# Se no seu código antigo você tinha dt/ingest_ts:
-# df_flat = df_flat.withColumnRenamed("dt", "data_ref").withColumnRenamed("ingest_ts", "ingest_timestamp")
-
-# --------------------------------------------------------------------
-# Seleciona colunas finais no padrão GTFS-ish
-# --------------------------------------------------------------------
-colunas_final = [
-    "route_id",          # código da linha (chave do JSON)
-    "stop_id",
-    "stop_name",
-    "stop_desc",
-    "stop_lat",
-    "stop_lon",
-    "data_ref",
-    "ingest_timestamp",
-]
-
-df_silver = df_flat.select(*colunas_final)
 
 # --------------------------------------------------------------------
 # Escrita em Delta (Silver)
 # --------------------------------------------------------------------
 (
-    df_silver
+    df
     .write
     .format("delta")
     .mode("overwrite")
@@ -129,6 +68,8 @@ df_silver = df_flat.select(*colunas_final)
 )
 
 print("✅ Silver de PARADAS gravado em Delta em:", SILVER_PATH)
+print(f"🚌 Total de linhas lidas: {df_raw.count()}")
+print(f"📍 Paradas válidas (com stops): {df.count()}")
 
 spark.stop()
 print("✅ SparkSession finalizada (paradas)")
