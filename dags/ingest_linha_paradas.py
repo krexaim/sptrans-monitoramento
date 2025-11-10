@@ -41,5 +41,5 @@ with DAG(
     )
 
     # Dependências (bronze → silver)
-    task_linhas >> task_paradas >> task_transform_linhas >> task_transform_paradas
+    [task_linhas, task_paradas] >> task_transform_linhas >> task_transform_paradas
      
