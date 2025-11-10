@@ -15,9 +15,18 @@ with DAG(
         task_id="transform_gtfs_bronze_silver",
         application="/opt/airflow/dags/utils/transform_gtfs_bronze_silver.py",
         conn_id="spark_default",
-        name="arrow-spark",
+        name="gtfs-bronze-silver",
         verbose=True,
         deploy_mode="client",
     )
+
+    # task_gold= SparkSubmitOperator(
+    #     task_id="transform_gtfs_silver_gold",
+    #     application="/opt/airflow/dags/utils/transform_gtfs_silver_gold.py",
+    #     conn_id="spark_default",
+    #     name="gtfs-silver-gold",
+    #     verbose=True,
+    #     deploy_mode="client",
+    # )    
 
     task_silver #>> task_gold
