@@ -44,17 +44,24 @@ def fetch_data_linhas():
 
 
 def fetch_data_paradas():
-    # fetch_data_linhas() já autentica
-    linhas = fetch_data_linhas()  # -> lista de dicts com "cl"
+    linhas = fetch_data_linhas()  # já autentica
     cls = [item["cl"] for item in linhas]
-    resultados = {}
+    registros = []
+
     for cl in cls:
         url = f"{SPTRANS_BASE_URL}/Parada/BuscarParadasPorLinha?codigoLinha={cl}"
-        try: 
+        try:
             resp = session.get(url)
-            resp.status_code == 200
-            resultados[cl] = resp.json()
+            if resp.status_code == 200:
+                paradas = resp.json()
+                registros.append({
+                    "route_id": cl,
+                    "stops": paradas
+                })
+            else:
+                print(f"⚠️ Erro {resp.status_code} ao buscar paradas da linha {cl}")
         except Exception as e:
-            print(f"⚠️ Erro ao buscar paradas da linha {cl}: {resp.status_code}")
-    print(f"✅ Total de paradas únicas coletadas: {len(cls)}")
-    return resultados
+            print(f"⚠️ Exceção ao buscar paradas da linha {cl}: {e}")
+
+    print(f"✅ Total de linhas com paradas coletadas: {len(registros)}")
+    return registros
