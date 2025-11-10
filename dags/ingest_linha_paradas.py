@@ -6,11 +6,11 @@ from utils.ingest_bronze import fetch_and_upload
 
 
 with DAG(
-    dag_id="ingest_to_bronze_linhas",
+    dag_id="ingest_linhas_paradas",
     start_date=datetime(2025, 10, 10),
     schedule_interval=None,
     catchup=False,
-    tags=["sptrans"]
+    tags=["sptrans", "ingest", "transform", "linhas", "paradas"]
 ) as dag:    
     # Bronze
     task_linhas = PythonOperator(
@@ -24,11 +24,10 @@ with DAG(
     )
 
     # Silver
-
     task_transform_linhas = SparkSubmitOperator(
         task_id="transform_linhas_bronze_silver",
         application="/opt/airflow/dags/utils/transform_linhas_bronze_silver.py",
-        conn_id="spark_default",     # mesma conexão do seu Airflow
+        conn_id="spark_default",
         name="sptrans-linhas-spark",
         verbose=True,
         deploy_mode="client",
