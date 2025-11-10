@@ -1,5 +1,6 @@
 import requests
 from .config import SPTRANS_API_KEY
+from typing import List, Dict, Any, Optional
 
 SPTRANS_BASE_URL = "https://api.olhovivo.sptrans.com.br/v2.1"
 session = requests.Session()
@@ -42,8 +43,25 @@ def fetch_data_linhas():
     print(f"✅ Total de linhas únicas coletadas: {len(linhas)}")
     return list(linhas.values())
 
+
 def fetch_data_paradas():
-    return True
+    # fetch_data_linhas() já autentica
+    linhas = fetch_data_linhas()  # -> lista de dicts com "cl"
+    cls = [item["cl"] for item in linhas]
+    resultados = {}
+    for cl in cls:
+        url = f"{SPTRANS_BASE_URL}/Parada/BuscarParadasPorLinha?codigoLinha={cl}"
+        try: 
+            resp = session.get(url)
+            resp.status_code == 200
+            resultados[cl] = resp.json()
+        except Exception as e:
+            print(f"⚠️ Erro ao buscar paradas da linha {cl}: {resp.status_code}")
+    print(f"✅ Total de paradas únicas coletadas: {len(cls)}")
+    return resultados
+    
+    
+    
 
 
 # adicionar mais funcoes depois
