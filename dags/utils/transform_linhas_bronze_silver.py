@@ -43,19 +43,37 @@ df = (
 # --------------------------------------------------------------------
 # Renomeia colunas
 # --------------------------------------------------------------------
+
 df = (
     df
     .withColumnRenamed("cl", "codigo_linha")
-    .withColumnRenamed("lc", "linha_circular")
-    .withColumnRenamed("lt", "letreiro")
-    .withColumnRenamed("sl", "sentido")
-    .withColumnRenamed("tl", "tipo_linha")
+    .withColumnRenamed("lc", "modo_circular")  
+    .withColumnRenamed("lt", "letreiro_1")
+    .withColumnRenamed("sl", "sentido_linha")  
+    .withColumnRenamed("tl", "letreiro_2")
     .withColumnRenamed("tp", "terminal_principal")
     .withColumnRenamed("ts", "terminal_secundario")
-    .withColumn("terminal_principal", F.lower(STRIP_ACCENTS(F.col("terminal_principal"))))
-    .withColumn("terminal_secundario", F.lower(STRIP_ACCENTS(F.col("terminal_secundario"))))
+    # Normalizar terminais
+    .withColumn("terminal_principal", F.lower(F.expr("STRIP_ACCENTS(terminal_principal)")))
+    .withColumn("terminal_secundario", F.lower(F.expr("STRIP_ACCENTS(terminal_secundario)")))
+    # Combinar letreiro_1 and letreiro_2 into letreiro
+    .withColumn("letreiro", F.concat(F.col("letreiro_1"), F.lit("-"), F.col("letreiro_2")))
     .withColumn("data_ref", F.current_date())
     .withColumn("ingest_timestamp", F.current_timestamp())
+    # Dropar colunas temporarias
+    .drop("letreiro_1") 
+    .drop("letreiro_2") 
+    # Ordenar
+    .select(
+        "codigo_linha", 
+        "modo_circular", 
+        "letreiro", 
+        "sentido_linha", 
+        "terminal_principal", 
+        "terminal_secundario", 
+        "data_ref", 
+        "ingest_timestamp"
+    )
 )
 
 # --------------------------------------------------------------------
