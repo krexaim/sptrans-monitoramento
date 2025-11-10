@@ -54,8 +54,8 @@ df = (
     .withColumnRenamed("tp", "terminal_principal")
     .withColumnRenamed("ts", "terminal_secundario")
     # Normalizar terminais
-    .withColumn("terminal_principal", F.lower(F.expr("STRIP_ACCENTS(terminal_principal)")))
-    .withColumn("terminal_secundario", F.lower(F.expr("STRIP_ACCENTS(terminal_secundario)")))
+    .withColumn("terminal_principal", F.lower(STRIP_ACCENTS(F.col("terminal_principal"))))
+    .withColumn("terminal_secundario", F.lower(STRIP_ACCENTS(F.col("terminal_secundario"))))
     # Combinar letreiro_1 and letreiro_2 into letreiro
     .withColumn("letreiro", F.concat(F.col("letreiro_1"), F.lit("-"), F.col("letreiro_2")))
     .withColumn("data_ref", F.current_date())
