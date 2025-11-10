@@ -1,6 +1,5 @@
 import requests
 from .config import SPTRANS_API_KEY
-from typing import List, Dict, Any, Optional
 
 SPTRANS_BASE_URL = "https://api.olhovivo.sptrans.com.br/v2.1"
 session = requests.Session()
@@ -27,7 +26,7 @@ def fetch_data_posicao():
 def fetch_data_linhas():
     authenticate()
     linhas = {}
-    termos = list("123456789n")  # letras e dígitos cobrem praticamente todas as linhas
+    termos = list("123456789n")  # cobre todas as linhas
 
     for termo in termos:
         url = f"{SPTRANS_BASE_URL}/Linha/Buscar?termosBusca={termo}"
@@ -59,11 +58,3 @@ def fetch_data_paradas():
             print(f"⚠️ Erro ao buscar paradas da linha {cl}: {resp.status_code}")
     print(f"✅ Total de paradas únicas coletadas: {len(cls)}")
     return resultados
-    
-    
-    
-
-
-# adicionar mais funcoes depois
-#def get_bus_previsao():
-#   url = f"{SPTRANS_BASE_URL}/Previsao/ParaParada?codigoLinha={{codigoLinha}}&parada={{codigoParada}}"
