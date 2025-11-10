@@ -29,7 +29,6 @@ with DAG(
         application="/opt/airflow/dags/utils/transform_linhas_bronze_silver.py",
         conn_id="spark_default",
         name="sptrans-linhas-spark",
-        verbose=True,
         deploy_mode="client",
     )
 
@@ -38,7 +37,6 @@ with DAG(
         application="/opt/airflow/dags/utils/transform_paradas_bronze_silver.py",
         conn_id="spark_default",
         name="sptrans-paradas-spark",
-        verbose=True,
         deploy_mode="client",
     )
 
