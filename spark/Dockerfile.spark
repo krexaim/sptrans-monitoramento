@@ -53,6 +53,7 @@ ENV SPARK_MASTER_HOST=0.0.0.0
 ENV SPARK_MASTER_PORT=7077
 ENV SPARK_MASTER_WEBUI_PORT=8080
 COPY spark-defaults.conf ${SPARK_HOME}/conf/spark-defaults.conf
+COPY log4j2.properties ${SPARK_HOME}/conf/log4j2.properties
 
 # -----------------------------
 # 7️⃣ Diretório de trabalho
