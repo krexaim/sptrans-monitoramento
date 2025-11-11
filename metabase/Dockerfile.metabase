@@ -1,0 +1,12 @@
+FROM eclipse-temurin:25
+
+ENV MB_PLUGINS_DIR=/app/plugins/
+
+RUN mkdir -p /app/plugins
+
+ADD https://downloads.metabase.com/latest/metabase.jar /app
+ADD https://github.com/motherduckdb/metabase_duckdb_driver/releases/download/0.4.1/duckdb.metabase-driver.jar /app/plugins
+
+RUN chmod -R 754 /app
+
+CMD ["java", "--add-opens", "java.base/java.nio=ALL-UNNAMED", "-jar", "/app/metabase.jar"]
