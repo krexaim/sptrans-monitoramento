@@ -13,7 +13,7 @@ with DAG(
     # Silver -> Gold 
     task_gold_linha= SparkSubmitOperator(
         task_id="transform_gold_dim_linha",
-        application="/opt/airflow/dags/utils/gold_dim_linha.py",
+        application="/opt/airflow/dags/utils/transform_gold_dim_linha.py",
         conn_id="spark_default",
         name="gold-dim-linha",
         deploy_mode="client",
@@ -21,7 +21,7 @@ with DAG(
 
     task_gold_parada= SparkSubmitOperator(
         task_id="transform_gold_dim_parada",
-        application="/opt/airflow/dags/utils/gold_dim_parada.py",
+        application="/opt/airflow/dags/utils/transform_gold_dim_parada.py",
         conn_id="spark_default",
         name="gold-dim-parada",
         deploy_mode="client",
