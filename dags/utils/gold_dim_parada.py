@@ -4,7 +4,7 @@ from pyspark.sql import types as T
 from datetime import datetime
 
 spark = (
-    SparkSession.builder.appName("SilverToGold_dim_linha")
+    SparkSession.builder.appName("SilverToGold_dim_parada")
     .getOrCreate()
 )
 print("✅ SparkSession inicializada")
