@@ -42,7 +42,7 @@ services:
       - sptrans-net      
       
   airflow:
-    image: alexbkim/airflow-spark:20
+    image: alexbkim/airflow-spark:22
     container_name: airflow
     hostname: airflow
     depends_on:
@@ -69,6 +69,7 @@ services:
       - ./.env:/opt/airflow/.env
       - spark_conf:/opt/spark/conf
       - spark_jars:/opt/spark/jars
+      - ./data/metabase_duckdb:/opt/airflow/dags/data/metabase
     command: >
       bash -c "
       airflow db migrate &&
@@ -163,8 +164,8 @@ services:
     environment:
       MB_DB_FILE: /home/metabase/metabase.db/metabase.db 
     volumes:
-      - ./data/metabase:/home/metabase/metabase.db       
-      - ./data/gold:/home/metabase/data                   
+      - ./data/metabase_duckdb:/home/metabase/data
+      - ./data/metabase_config:/home/metabase/metabase.db
     networks:
       - sptrans-net
 
