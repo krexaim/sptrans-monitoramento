@@ -56,6 +56,9 @@ con.close()
 # Substitui o arquivo antigo (movimento atômico)
 try:
     shutil.move(TEMP_PATH, FINAL_PATH)
+    size = os.path.getsize(FINAL_PATH)
+    mtime = os.path.getmtime(FINAL_PATH)
+    print(f"📏 Novo arquivo: {size/1024/1024:.2f} MB | Última modificação: {mtime}")
     print(f"🎉 Banco atualizado com sucesso → {FINAL_PATH}")
 except Exception as e:
     print(f"❌ Falha ao substituir arquivo final: {e}")
