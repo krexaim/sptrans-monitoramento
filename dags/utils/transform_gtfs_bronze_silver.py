@@ -178,7 +178,7 @@ print("✅ stop_times ->", f"{SILVER_PATH}stop_times")
 # -----------------------------
 print("▶ Transforming SHAPES ...")
 schema = T.StructType([
-    T.StructField("shape_id",             T.StringType(), True),
+    T.StructField("shape_id",             T.IntegerType(), True),
     T.StructField("shape_pt_lat",         T.DoubleType(), True),
     T.StructField("shape_pt_lon",         T.DoubleType(), True),
     T.StructField("shape_pt_sequence",    T.IntegerType(), True),
