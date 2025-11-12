@@ -4,3 +4,4 @@ python-dotenv
 pyspark==3.5.3
 apache-airflow-providers-apache-spark
 delta-spark==3.3.2
+duckdb
