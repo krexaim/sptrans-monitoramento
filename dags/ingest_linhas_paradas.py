@@ -10,7 +10,7 @@ with DAG(
     dag_id="ingest_linhas_paradas",
     start_date=datetime(2025, 10, 10),
     schedule_interval="@daily",
-    catchup=True,
+    catchup=False,
     tags=["sptrans", "ingest", "transform", "linhas", "paradas"]
 ) as dag:    
     # Bronze
