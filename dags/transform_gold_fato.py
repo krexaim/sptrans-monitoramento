@@ -13,7 +13,7 @@ with DAG(
     
     task_fato_posicao = SparkSubmitOperator(
         task_id="transform_gold_fato_posicao",
-        application="/opt/airflow/dags/utils/gold_fato_posicao.py",
+        application="/opt/airflow/dags/utils/transform_gold_fato_posicao.py",
         conn_id="spark_default",
         name="gold-fato-posicao",
         deploy_mode="client",
