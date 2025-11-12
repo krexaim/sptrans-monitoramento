@@ -4,61 +4,76 @@ import os
 
 print("💾 Criando/atualizando banco local: sptrans.duckdb")
 
-# Caminho do arquivo DuckDB (volume compartilhado entre Airflow e Metabase)
 BASE_PATH = "/opt/airflow/dags/data/metabase"
 TEMP_PATH = f"{BASE_PATH}/sptrans_temp.duckdb"
 FINAL_PATH = f"{BASE_PATH}/sptrans.duckdb"
 
-# Diretórios S3 (MinIO)
+# MinIO endpoint
+MINIO_ENDPOINT = "minio:9000"
+
+# Delta/Parquet paths
 paths = {
-    "dim_linha": "s3://gold/dim_linha/*.parquet",
-    "dim_parada": "s3://gold/dim_parada/*.parquet",
-    "fato_posicao": "s3://gold/fato_posicao/**/*.parquet",
-    # Caso tenha KPIs futuros:
-    # "kpi_operacional_diario": "s3://gold/kpis/kpi_operacional_diario/*.parquet",
+    "dim_linha": "s3://gold/dim_linha/",
+    "dim_parada": "s3://gold/dim_parada/",
+    "fato_posicao": "s3://gold/fato_posicao/",
 }
 
-# Garante que diretório existe
+# Ensure directory exists
 os.makedirs(os.path.dirname(FINAL_PATH), exist_ok=True)
 
-# Conexão temporária
+# Connect to DuckDB file
 con = duckdb.connect(TEMP_PATH)
-con.execute("INSTALL httpfs; LOAD httpfs;")
 print(f"📂 Conectado ao banco: {TEMP_PATH}")
 
-# Habilita leitura do MinIO (via S3)
-con.execute("""
-    SET s3_endpoint='minio:9000';
-    SET s3_access_key_id='admin';
-    SET s3_secret_access_key='minioadmin';
-    SET s3_use_ssl=false;
-    SET s3_url_style='path';
+# Enable MinIO access (DuckDB credentials)
+con.execute(f"""
+    CREATE SECRET minio_s3 (
+        TYPE s3,
+        KEY_ID 'admin',
+        SECRET 'minioadmin',
+        REGION 'us-east-1',
+        ENDPOINT '{MINIO_ENDPOINT}',
+        USE_SSL false,
+        URL_STYLE 'path'
+    );
 """)
 
-# Cria schema gold se não existir
+# Create schema gold
 con.execute("CREATE SCHEMA IF NOT EXISTS gold;")
 
-# Lê e recria cada tabela do MinIO dentro do DuckDB
 for name, path in paths.items():
-    print(f"📦 Lendo {name} de {path}...")
+    print(f"📦 Processando {name} de {path}...")
+
+    # Try Delta first
     try:
         con.execute(f"""
             CREATE OR REPLACE TABLE gold.{name} AS
-            SELECT * FROM read_parquet('{path}');
+            SELECT * FROM delta_scan('{path}');
         """)
-        print(f"✅ Tabela gold.{name} criada/atualizada.")
-    except Exception as e:
-        print(f"⚠️ Erro ao processar {name}: {e}")
+        print(f"✅ Lido como Delta → gold.{name}")
+        continue
+    except Exception as delta_err:
+        print(f"⚠️ Delta falhou para {name}: {delta_err}")
+        print("➡️ Tentando fallback com read_parquet...")
 
-# Fecha o banco temporário
+    # Fallback to Parquet glob
+    try:
+        con.execute(f"""
+            CREATE OR REPLACE TABLE gold.{name} AS
+            SELECT * FROM read_parquet('{path}*.parquet');
+        """)
+        print(f"✅ Lido como Parquet → gold.{name}")
+    except Exception as parquet_err:
+        print(f"❌ Falhou ao ler {name}: {parquet_err}")
+
+# Close connection
 con.close()
 
-# Substitui o arquivo antigo (movimento atômico)
+# Atomic replace
 try:
     shutil.move(TEMP_PATH, FINAL_PATH)
-    size = os.path.getsize(FINAL_PATH)
-    mtime = os.path.getmtime(FINAL_PATH)
-    print(f"📏 Novo arquivo: {size/1024/1024:.2f} MB | Última modificação: {mtime}")
+    size = os.path.getsize(FINAL_PATH) / 1024 / 1024
+    print(f"📏 Novo arquivo: {size:.2f} MB")
     print(f"🎉 Banco atualizado com sucesso → {FINAL_PATH}")
 except Exception as e:
     print(f"❌ Falha ao substituir arquivo final: {e}")
