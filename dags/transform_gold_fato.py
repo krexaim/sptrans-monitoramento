@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 with DAG(
     dag_id="transform_gold_fato",
     start_date=datetime(2025, 10, 10),
-    schedule_interval=None,  
+    schedule_interval="*/10 * * * *",  
     catchup=False,
     tags=["sptrans", "transform", "gold", "fato"]
 ) as dag:
