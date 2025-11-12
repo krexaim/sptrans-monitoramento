@@ -14,40 +14,51 @@ imagem draw.io
 
 ## Stack de Tecnologias
 
+| Componente          | Função                      | Tecnologia                          |
+| ------------------- | --------------------------- | ----------------------------------- |
+| 🧩 Orquestração     | Agendamento e monitoramento | **Apache Airflow 2.10** + Postgres 15 backend |
+| ⚡ Processamento     | ETL e transformações        | **Apache Spark 3.5.3 + Delta Lake 3.3.2** |
+| 🪣 Armazenamento    | Data Lake compatível com S3 | **MinIO**                           |
+| 🗄️ Banco analítico | Consultas rápidas e locais, alimenta o Metabase  | **DuckDB**                          |
+| 📊 Visualização     | Dashboards e KPIs           | **Metabase**                        |
+| 🐍 Linguagem        | Ingestão e integração       | **Python 3**                     |
+| 🛰️ Fonte de dados  | API em tempo real e GTFS    | **SPTrans Olho Vivo + GTFS**        |
+
+
 Docker - containerização e ambiente padronizado para todos os serviços
 
-API Olho Vivo (SPTrans) - fonte de dados em tempo real
+## Camadas de Dados do Data Lake (Medalhão)
 
-Python 3.13 - scripts de ingestão e transformação
+| Camada        | Formato | Descrição                                        |
+| ------------- | ------- | ------------------------------------------------ |
+| 🥉 **Bronze** | JSON e TXT(CSV)   | Dados brutos extraídos da API SPTrans e arquivos estáticos do GTFS da SPTrans   |
+| 🥈 **Silver** | Delta   | Dados tratados, normalizados e particionados.    |
+| 🥇 **Gold**   | Delta   | Dados analíticos prontos para KPIs e dashboards. |
 
-MinIO - data lake para armazenamento de dados
+## Pipelines e DAGs
 
-Apache Airflow 2.10 - orquestração de tarefas
-
-Apache Spark 3.5.3 - processamento e transformação de dados
-
-Delta Lake 3.3.2 - data lakehouse junto com o MinIO para armazenamento com suporte ACID e validação de schema
-
-DuckDB - banco de dados OLAP fazendo query SQL do Delta Lake
-
-Metabase - visualização de dados, criação de dashboards e KPIs
-
-## Estrutura de Pastas
-
-```
-```
-
-## Camadas de Dados do Data Lake
-
-Utilizando arquitetura medalhão:
-
-- Bronze: dados brutos em JSON, extraídos da API.
-
-- Silver: dados limpos e padronizados em Delta.
-
-- Gold: dados analíticos prontos para dashboard/KPIs.
+1. Ingestão (Bronze)
+   1. ```ingest_linhas_paradas.py``` -  1x/dia
+     * Baixa dados de linhas e paradas via API.
+     * Salva em ```s3a://bronze/linhas/``` e ```s3a://bronze/paradas/``` particionado por ano/mês/dia.
+   2. ```ingest_transform_posicao.py``` - 1x/2 minutos
+     * Captura informações sobre posição de ônibus em near real-time.
+     * Salva em ```s3a://bronze/posicao/``` particionado por ano/mês/dia.
+   3. Upload manual do [GTFS SPTrans](https://www.sptrans.com.br/desenvolvedores/) para ```s3a://bronze/gtfs/``` 1x/semana
+2.  Transformação (Silver)
+    1.  ```transform_linhas_bronze_silver.py``` - Cria Delta table de linhas.
+    2.  ```transform_paradas_bronze_silver.py```- Cria Delta table de paradas.
+    3.  ```transform_gtfs_bronze_silver.py``` - Processa os arquivos GTFS (`routes`, `stops`, `trips`, `stop_times`, `shapes`).
+    4.  ```transform_posicao_bronze_silver.py```- Cria Delta Table incremental de posições (merge(upsert) por `codigo_veiculo` e `hora_referencia`)
+3.  Camada Gold (Analítica)
+    1.  ```transform_gold_dim_linha.py``` - Junta Silver/linhas com GTFS/routes para criar dimensão de linha.
+    2.  ```transform_gold_dim_parada.py``` - Enriquece paradas da API com dados estáticos do `GTFS/stops` para criar a dimensão de parada.
+    3.  ```transform_gold_fato_posicao.py``` - Mantém apenas os dados fatos da posição de ônibus, integrando posição da silver e `codigo_linha`.
+   
+## KPIs e Dashboard
 
 ## Rodando o Projeto
+
 
 ##### Pré-requisitos
 - [Docker e Docker Compose](https://docs.docker.com/compose/install/) instalados.
@@ -80,11 +91,11 @@ docker compose up -d
 | [Airflow](http://localhost:8080/) | admin | admin |
 | [MinIO](http://localhost:9001/login) | admin | minioadmin |
 | [Spark Master UI](http://localhost:8081) | n/a | n/a|
-| Metabase | | |
+| [Metabase](http:O//localhost:3000)| criar | criar |
 
 ## Autores:
 
 | Nome | Linkedin | Github | 
 | --- | --- | --- |
-| Alex Kim | | | 
-| Ítalo Berioni | | 
+| Alex Kim | [Link](https://www.linkedin.com/in/alex-kim-97b97910b/) | [Link](https://github.com/krexaim)| 
+| Ítalo Berioni | [Link](https://www.linkedin.com/in/italoberioni/) | [Link](https://github.com/Beriond)| 
