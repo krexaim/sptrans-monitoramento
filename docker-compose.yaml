@@ -136,31 +136,31 @@ services:
     networks:
       - sptrans-net
 
-  jupyter:
-    image: jupyter/pyspark-notebook:latest
-    container_name: jupyter
-    ports:
-      - "8888:8888"
-    environment:
-      - SPARK_MASTER=spark://spark:7077
-      - AWS_ACCESS_KEY_ID=admin
-      - AWS_SECRET_ACCESS_KEY=minioadmin
-      - MINIO_ENDPOINT=http://minio:9000
-      - PYSPARK_PYTHON=python3
-      - PYSPARK_DRIVER_PYTHON=jupyter
-      - PYSPARK_DRIVER_PYTHON_OPTS=lab --ip=0.0.0.0 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''
-    volumes:
-      - ./notebooks:/home/jovyan/work
-      - ./dags/utils:/opt/workspace/utils 
-      - .env:/opt/workspace/.env
-      - spark_jars:/usr/local/spark/jars
-    depends_on:
-      - spark
-      - minio
-    command: >
-      start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --NotebookApp.allow_origin='*' --NotebookApp.allow_remote_access=True
-    networks:
-      - sptrans-net
+  # jupyter:
+  #   image: jupyter/pyspark-notebook:latest
+  #   container_name: jupyter
+  #   ports:
+  #     - "8888:8888"
+  #   environment:
+  #     - SPARK_MASTER=spark://spark:7077
+  #     - AWS_ACCESS_KEY_ID=admin
+  #     - AWS_SECRET_ACCESS_KEY=minioadmin
+  #     - MINIO_ENDPOINT=http://minio:9000
+  #     - PYSPARK_PYTHON=python3
+  #     - PYSPARK_DRIVER_PYTHON=jupyter
+  #     - PYSPARK_DRIVER_PYTHON_OPTS=lab --ip=0.0.0.0 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''
+  #   volumes:
+  #     - ./notebooks:/home/jovyan/work
+  #     - ./dags/utils:/opt/workspace/utils 
+  #     - .env:/opt/workspace/.env
+  #     - spark_jars:/usr/local/spark/jars
+  #   depends_on:
+  #     - spark
+  #     - minio
+  #   command: >
+  #     start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --NotebookApp.allow_origin='*' --NotebookApp.allow_remote_access=True
+  #   networks:
+  #     - sptrans-net
 
   metabase:
     image: alexbkim/metabase-duckdb:latest    
