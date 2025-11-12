@@ -5,7 +5,7 @@ on:
     branches:
       - spark-scripts
     paths:
-      - 'airflow/Dockerfile'
+      - 'airflow/Dockerfile.airflow'
       - '.github/workflows/docker-airflow-build.yaml'
       - 'airflow/requirements.txt'
 
@@ -27,7 +27,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./airflow
-          file: ./airflow/Dockerfile
+          file: ./airflow/Dockerfile.airflow
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/airflow-spark:latest
@@ -39,3 +39,5 @@ jobs:
       # -----------------------------
       - name: Verify image built
         run: docker run --rm ${{ secrets.DOCKER_USERNAME }}/airflow-spark:latest airflow version
+      - name: List Python libraries
+        run: docker run --rm ${{ secrets.DOCKER_USERNAME }}/airflow-spark:latest pip list
