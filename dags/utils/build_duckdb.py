@@ -1,23 +1,29 @@
 import duckdb
+import shutil
 import os
 
 print("💾 Criando/atualizando banco local: sptrans.duckdb")
 
 # Caminho do arquivo DuckDB (volume compartilhado entre Airflow e Metabase)
-DB_PATH = "/opt/airflow/dags/data/metabase/sptrans.duckdb"
+FINAL_PATH = "/opt/airflow/dags/data/sptrans.duckdb"
+TEMP_PATH = "/opt/airflow/dags/data/sptrans_temp.duckdb"
 
 # Diretórios S3 (MinIO)
 paths = {
     "dim_linha": "s3://gold/dim_linha/*.parquet",
     "dim_parada": "s3://gold/dim_parada/*.parquet",
     "fato_posicao": "s3://gold/fato_posicao/**/*.parquet",
-    # Caso você tenha KPIs futuros:
+    # Caso tenha KPIs futuros:
     # "kpi_operacional_diario": "s3://gold/kpis/kpi_operacional_diario/*.parquet",
 }
 
-# Conecta ou cria o banco DuckDB
-con = duckdb.connect(DB_PATH)
-print(f"📂 Conectado ao banco: {DB_PATH}")
+# Garante que diretório existe
+os.makedirs(os.path.dirname(FINAL_PATH), exist_ok=True)
+
+# Conexão temporária
+con = duckdb.connect(TEMP_PATH)
+con.execute("INSTALL httpfs; LOAD httpfs;")
+print(f"📂 Conectado ao banco: {TEMP_PATH}")
 
 # Habilita leitura do MinIO (via S3)
 con.execute("INSTALL httpfs; LOAD httpfs;")
@@ -40,13 +46,16 @@ for name, path in paths.items():
             CREATE OR REPLACE TABLE gold.{name} AS
             SELECT * FROM read_parquet('{path}');
         """)
-        print(f"✅ Tabela gold.{name} criada/atualizada com sucesso.")
+        print(f"✅ Tabela gold.{name} criada/atualizada.")
     except Exception as e:
         print(f"⚠️ Erro ao processar {name}: {e}")
 
-# Verifica tabelas criadas
-print("\n📊 Tabelas disponíveis:")
-print(con.execute("SHOW TABLES FROM gold;").fetchall())
-
+# Fecha o banco temporário
 con.close()
-print(f"\n🎉 Banco DuckDB atualizado em: {DB_PATH}")
+
+# Substitui o arquivo antigo (movimento atômico)
+try:
+    shutil.move(TEMP_PATH, FINAL_PATH)
+    print(f"🎉 Banco atualizado com sucesso → {FINAL_PATH}")
+except Exception as e:
+    print(f"❌ Falha ao substituir arquivo final: {e}")
