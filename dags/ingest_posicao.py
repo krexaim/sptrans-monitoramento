@@ -22,8 +22,7 @@ with DAG(
         task_id="transform_posicao_bronze_silver",
         application="/opt/airflow/dags/utils/transform_posicao_bronze_silver.py",
         conn_id="spark_default",
-        name="arrow-spark",
-        verbose=True,
+        name="posicao-bronze-silver",
         deploy_mode="client",
     )
 

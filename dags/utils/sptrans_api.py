@@ -26,7 +26,7 @@ def fetch_data_posicao():
 def fetch_data_linhas():
     authenticate()
     linhas = {}
-    termos = list("123456789n")  # letras e dígitos cobrem praticamente todas as linhas
+    termos = list("123456789n")  # cobre todas as linhas
 
     for termo in termos:
         url = f"{SPTRANS_BASE_URL}/Linha/Buscar?termosBusca={termo}"
@@ -42,10 +42,26 @@ def fetch_data_linhas():
     print(f"✅ Total de linhas únicas coletadas: {len(linhas)}")
     return list(linhas.values())
 
+
 def fetch_data_paradas():
-    return True
+    linhas = fetch_data_linhas()  # já autentica
+    cls = [item["cl"] for item in linhas]
+    registros = []
 
+    for cl in cls:
+        url = f"{SPTRANS_BASE_URL}/Parada/BuscarParadasPorLinha?codigoLinha={cl}"
+        try:
+            resp = session.get(url)
+            if resp.status_code == 200:
+                paradas = resp.json()
+                registros.append({
+                    "route_id": cl,
+                    "stops": paradas
+                })
+            else:
+                print(f"⚠️ Erro {resp.status_code} ao buscar paradas da linha {cl}")
+        except Exception as e:
+            print(f"⚠️ Exceção ao buscar paradas da linha {cl}: {e}")
 
-# adicionar mais funcoes depois
-#def get_bus_previsao():
-#   url = f"{SPTRANS_BASE_URL}/Previsao/ParaParada?codigoLinha={{codigoLinha}}&parada={{codigoParada}}"
+    print(f"✅ Total de linhas com paradas coletadas: {len(registros)}")
+    return registros

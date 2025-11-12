@@ -1,7 +1,9 @@
+
 services:
   postgres:
     image: postgres:15
     container_name: postgres
+    hostname: postgres
     environment:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
@@ -47,8 +49,9 @@ services:
   #     /bin/sh -c ""
       
   airflow:
-    image: alexbkim/airflow-spark:latest
+    image: alexbkim/airflow-spark:20
     container_name: airflow
+    hostname: airflow
     depends_on:
       postgres:
         condition: service_healthy
@@ -60,6 +63,7 @@ services:
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: "True"
+      AIRFLOW__WEBSERVER__SECRET_KEY: "secretkey"
       AIRFLOW_ENV: docker
       SPARK_CONF_DIR: /opt/spark/conf
     ports:
@@ -74,7 +78,7 @@ services:
       - spark_jars:/opt/spark/jars
     command: >
       bash -c "
-      airflow db init &&
+      airflow db migrate &&
       airflow users create --username admin --firstname admin --lastname admin --role Admin --email admin@example.com --password admin &&
       airflow standalone
       "
@@ -88,12 +92,12 @@ services:
        - sptrans-net   
 
   spark:
-    image: alexbkim/spark-3.5.3:latest
+    image: alexbkim/spark-3.5.3:14
     container_name: spark
     hostname: spark
     environment:
       - SPARK_MODE=master
-      - SPARK_MASTER_HOST=0.0.0.0
+      - SPARK_MASTER_HOST=spark
       - SPARK_MASTER_PORT=7077
       - SPARK_MASTER_WEBUI_PORT=8080
       - AWS_ACCESS_KEY_ID=admin
@@ -154,6 +158,20 @@ services:
       - minio
     command: >
       start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --NotebookApp.allow_origin='*' --NotebookApp.allow_remote_access=True
+    networks:
+      - sptrans-net
+
+  metabase:
+    image: alexbkim/metabase-duckdb:latest    
+    container_name: metabase
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_FILE: /home/metabase/metabase.db/metabase.db 
+    volumes:
+      - ./data/metabase:/home/metabase/metabase.db       
+      - ./data/gold:/home/metabase/data                   
     networks:
       - sptrans-net
 
