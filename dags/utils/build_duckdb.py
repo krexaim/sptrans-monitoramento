@@ -5,8 +5,9 @@ import os
 print("💾 Criando/atualizando banco local: sptrans.duckdb")
 
 # Caminho do arquivo DuckDB (volume compartilhado entre Airflow e Metabase)
-FINAL_PATH = "/opt/airflow/dags/data/sptrans.duckdb"
-TEMP_PATH = "/opt/airflow/dags/data/sptrans_temp.duckdb"
+BASE_PATH = "/opt/airflow/dags/data/metabase"
+TEMP_PATH = f"{BASE_PATH}/sptrans_temp.duckdb"
+FINAL_PATH = f"{BASE_PATH}/sptrans.duckdb"
 
 # Diretórios S3 (MinIO)
 paths = {
