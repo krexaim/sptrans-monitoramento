@@ -6,7 +6,7 @@ O pipeline realiza a ingestão, transformação e disponibilização dos dados, 
 
 O sistema coleta informações de posição dos ônibus a cada 2 minutos (batch), e os dados transformados alimentam um dashboard interativo, que exibirá informações em near real-time e KPIs operacionais do sistema de transporte.
 
-O projeto tem foco em aprendizado e portfólio, aplicando boas práticas de engenharia de dados e arquitetura de pipelines escaláveis.
+O projeto tem foco em aprendizado e portfólio, aplicando boas práticas de engenharia de dados e arquitetura de pipelines escaláveis e implementações básicas de cybersecurity e CI/CD.
 
 ## Arquitetura de Solução
 
