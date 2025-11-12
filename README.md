@@ -10,7 +10,7 @@ O projeto tem foco em aprendizado e portfólio, aplicando boas práticas de enge
 
 ## Arquitetura de Solução
 
-imagem draw.io
+![Arquitetura do Projeto](docs/images/Arquitetura.png)
 
 ## Stack de Tecnologias
 
@@ -55,12 +55,10 @@ Docker - containerização e ambiente padronizado para todos os serviços
     2.  ```transform_gold_dim_parada.py``` - Enriquece paradas da API com dados estáticos do `GTFS/stops` para criar a dimensão de parada.
     3.  ```transform_gold_fato_posicao.py``` - Mantém apenas os dados fatos da posição de ônibus, integrando posição da silver e `codigo_linha`.
    
-## KPIs e Dashboard
+## Dashboard
+![Dashboard](docs/images/dashboard.png)
 
-## Rodando o Projeto
-
-
-##### Pré-requisitos
+<!-- ##### Pré-requisitos
 - [Docker e Docker Compose](https://docs.docker.com/compose/install/) instalados.
 - [Chave de acesso da API Olho Vivo da SPTrans.](https://www.sptrans.com.br/desenvolvedores/api-do-olho-vivo-guia-de-referencia/)
 
@@ -91,11 +89,23 @@ docker compose up -d
 | [Airflow](http://localhost:8080/) | admin | admin |
 | [MinIO](http://localhost:9001/login) | admin | minioadmin |
 | [Spark Master UI](http://localhost:8081) | n/a | n/a|
-| [Metabase](http:O//localhost:3000)| criar | criar |
+| [Metabase](http:O//localhost:3000)| criar | criar | -->
 
-## Autores:
+## Autores
 
-| Nome | Linkedin | Github | 
-| --- | --- | --- |
-| Alex Kim | [Link](https://www.linkedin.com/in/alex-kim-97b97910b/) | [Link](https://github.com/krexaim)| 
-| Ítalo Berioni | [Link](https://www.linkedin.com/in/italoberioni/) | [Link](https://github.com/Beriond)| 
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="50%">
+        <strong>Alex Kim</strong><br>
+         <a href="https://www.linkedin.com/in/alex-kim-97b97910b/" target="_blank">LinkedIn</a>  
+        |  <a href="https://github.com/krexaim" target="_blank">GitHub</a>
+      </td>
+      <td align="center" width="50%">
+        <strong>Ítalo Berioni</strong><br>
+         <a href="https://www.linkedin.com/in/italoberioni/" target="_blank">LinkedIn</a>  
+        |  <a href="https://github.com/Beriond" target="_blank">GitHub</a>
+      </td>
+    </tr>
+  </table>
+</p>
