@@ -27,7 +27,6 @@ con.execute("INSTALL httpfs; LOAD httpfs;")
 print(f"📂 Conectado ao banco: {TEMP_PATH}")
 
 # Habilita leitura do MinIO (via S3)
-con.execute("INSTALL httpfs; LOAD httpfs;")
 con.execute("""
     SET s3_endpoint='minio:9000';
     SET s3_access_key_id='admin';
