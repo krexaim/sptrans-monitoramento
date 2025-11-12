@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime, timedelta
 
 with DAG(
@@ -18,4 +19,11 @@ with DAG(
         deploy_mode="client",
     )
 
-    task_fato_posicao
+    task_trigger_duckdb = TriggerDagRunOperator(
+        task_id="trigger_update_duckdb",
+        trigger_dag_id="update_duckdb",
+        wait_for_completion=False,
+        reset_dag_run=True,
+    )
+
+    task_fato_posicao >> task_trigger_duckdb
