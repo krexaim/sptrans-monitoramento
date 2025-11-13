@@ -1,10 +1,11 @@
 # SPTrans - Monitoramento
 
 ## Objetivo
-Este projeto tem como objetivo desenvolver um pipeline de dados completo para o monitoramento do transporte público da cidade de São Paulo, utilizando a API Olho Vivo da SPTrans.
+Este projeto tem como objetivo desenvolver um pipeline de dados completo para o monitoramento do transporte público da cidade de São Paulo, com motivaçào por uma necessidade de visibilidade operacional para linhas, paradas e posições da rede de ônibus da SPTrans. KPIs desenvoldios em mente para atendimento de metas/SLAs presentes e futuros para linhas, posições, quantidade por região e relação de linhas ativas. As paradas podem ser avaliadas como possibilidade de melhoria para infraestrutura da SPTrans para as paradas.
+
 O pipeline realiza a ingestão, transformação e disponibilização dos dados, orquestrado pelo Apache Airflow, com armazenamento no MinIO e processamento via PySpark. Os dados brutos são armazenados em camadas Bronze (JSON) e transformados em Silver e Gold (Delta) para posterior análise e consumo via DuckDB e Metabase.
 
-O sistema coleta informações de posição dos ônibus a cada 2 minutos (batch), e os dados transformados alimentam um dashboard interativo, que exibirá informações em near real-time e KPIs operacionais do sistema de transporte.
+O sistema coleta informações de posição dos ônibus a cada 2 minutos (batch), e os dados transformados alimentam um dashboard interativo, que exibe informações em near real-time e KPIs operacionais do sistema de transporte.
 
 O projeto tem foco em aprendizado e portfólio, aplicando boas práticas de engenharia de dados e arquitetura de pipelines escaláveis e implementações básicas de cybersecurity e CI/CD.
 
@@ -39,11 +40,11 @@ Docker - containerização e ambiente padronizado para todos os serviços
 
 1. Ingestão (Bronze)
    1. ```ingest_linhas_paradas.py``` -  1x/dia
-     * Baixa dados de linhas e paradas via API.
-     * Salva em ```s3a://bronze/linhas/``` e ```s3a://bronze/paradas/``` particionado por ano/mês/dia.
+         * Baixa dados de linhas e paradas via API.
+         * Salva em ```s3a://bronze/linhas/``` e ```s3a://bronze/paradas/``` particionado por ano/mês/dia.
    2. ```ingest_transform_posicao.py``` - 1x/2 minutos
-     * Captura informações sobre posição de ônibus em near real-time.
-     * Salva em ```s3a://bronze/posicao/``` particionado por ano/mês/dia.
+         * Captura informações sobre posição de ônibus em near real-time.
+         * Salva em ```s3a://bronze/posicao/``` particionado por ano/mês/dia.
    3. Upload manual do [GTFS SPTrans](https://www.sptrans.com.br/desenvolvedores/) para ```s3a://bronze/gtfs/``` 1x/semana
 2.  Transformação (Silver)
     1.  ```transform_linhas_bronze_silver.py``` - Cria Delta table de linhas.
@@ -58,6 +59,14 @@ Docker - containerização e ambiente padronizado para todos os serviços
 ## Dashboard
 ![Dashboard](docs/images/dashboard.png)
 
+### KPIs
+
+1. Ônibus ativos por minuto 
+2. Top 10 Paradas com Mais Linhas Atendidas
+3. Ônibus por região (hoje)
+4. Linhas ativas por hora (hoje)
+5. Mapa de última posição de cada ônibus
+   
 <!-- ##### Pré-requisitos
 - [Docker e Docker Compose](https://docs.docker.com/compose/install/) instalados.
 - [Chave de acesso da API Olho Vivo da SPTrans.](https://www.sptrans.com.br/desenvolvedores/api-do-olho-vivo-guia-de-referencia/)
